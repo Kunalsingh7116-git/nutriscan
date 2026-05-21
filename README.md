@@ -1,7 +1,7 @@
 # 🥗 NutriScan — Smart Nutritional Tracking System
 
-> A full-stack MERN application for personalized nutrition tracking, built as a DBMS Minor Project.  
-> **NSUT · Department of Instrumentation & Control Engineering**  
+> A full-stack MERN application for personalized nutrition tracking, built as a Personal Project.  
+> **NSUT · Instrumentation & Control Engineering**  
 > Kunal Singh 
 
 ---
