@@ -1,76 +1,51 @@
-import React, { useEffect, useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Bell, BookOpen, Camera, LayoutGrid, LogOut, UserRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import Brand from './Brand';
 
 const navItems = [
-  { to: '/dashboard', icon: '📊', label: 'Home' },
-  { to: '/food-products', icon: '🍱', label: 'Foods' },
-  { to: '/log-food', icon: '✏️', label: 'Log' },
-  { to: '/alerts', icon: '🔔', label: 'Alerts' },
-  { to: '/profile', icon: '👤', label: 'Profile' },
+  { to: '/dashboard', Icon: LayoutGrid, label: 'Overview' },
+  { to: '/log-food', Icon: Camera, label: 'Food log' },
+  { to: '/food-products', Icon: BookOpen, label: 'Food library' },
+  { to: '/alerts', Icon: Bell, label: 'Alerts' },
+  { to: '/profile', Icon: UserRound, label: 'Profile' },
 ];
 
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    api.get('/alerts').then(r => {
-      setUnreadCount(r.data.filter(a => a.status === 'Unread').length);
-    }).catch(() => {});
-    const iv = setInterval(() => {
-      api.get('/alerts').then(r => setUnreadCount(r.data.filter(a => a.status === 'Unread').length)).catch(() => {});
-    }, 30000);
-    return () => clearInterval(iv);
-  }, []);
-
-  const handleLogout = () => { logout(); navigate('/login'); };
+    const refreshAlerts = () => api.get('/alerts')
+      .then(({ data }) => setUnreadCount(data.filter(alert => alert.status === 'Unread').length))
+      .catch(() => {});
+    refreshAlerts();
+    const interval = setInterval(refreshAlerts, 30000);
+    return () => clearInterval(interval);
+  }, [pathname]);
 
   return (
     <div className="app-layout">
-      {/* Desktop Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-logo">
-          <h1>🥗 NutriScan</h1>
-          <span>Smart Nutrition Tracking</span>
-        </div>
-        <nav style={{ flex: 1 }}>
-          {navItems.map(({ to, icon, label }) => (
-            <NavLink key={to} to={to} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-              <span className="nav-icon">{icon}</span> {label === 'Home' ? 'Dashboard' : label === 'Foods' ? 'Food Products' : label}
-              {to === '/alerts' && unreadCount > 0 && <span className="alert-badge">{unreadCount}</span>}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 10 }}>
-            <div style={{ fontWeight: 700, color: 'var(--text-dim)' }}>{user?.name?.first} {user?.name?.last}</div>
-            <div style={{ fontFamily: 'Space Mono', fontSize: '0.72rem' }}>{user?.email}</div>
+      <main className="main-content">
+        <header className="workspace-header">
+          <div className="app-bar">
+            <Link className="brand-link" to="/dashboard"><Brand /></Link>
+            <button type="button" className="icon-button app-signout" aria-label="Sign out" title="Sign out"
+              onClick={() => { logout(); navigate('/login'); }}><LogOut size={18} /></button>
           </div>
-          <button className="btn btn-outline btn-sm" onClick={handleLogout} style={{ width: '100%', justifyContent: 'center' }}>
-            Sign Out
-          </button>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <main className="main-content" style={{ paddingBottom: 72 }}>
+        </header>
         <Outlet />
       </main>
-
-      {/* Mobile Bottom Navigation */}
-      <nav className="mobile-bottom-nav">
-        {navItems.map(({ to, icon, label }) => (
-          <NavLink key={to} to={to} className={({ isActive }) => `mobile-nav-item${isActive ? ' active' : ''}`}>
-            <span className="mobile-nav-icon">
-              {icon}
-              {to === '/alerts' && unreadCount > 0 && (
-                <span className="mobile-alert-dot">{unreadCount}</span>
-              )}
-            </span>
-            <span className="mobile-nav-label">{label}</span>
+      <nav className="mobile-bottom-nav" aria-label="Main navigation">
+        {navItems.map(({ to, Icon, label }) => (
+          <NavLink key={to} to={to} className="mobile-nav-item">
+            <Icon size={19} aria-hidden="true" />
+            <span>{label}</span>
+            {to === '/alerts' && unreadCount > 0 && <span className="nav-count" aria-label={`${unreadCount} unread`}>{unreadCount}</span>}
           </NavLink>
         ))}
       </nav>

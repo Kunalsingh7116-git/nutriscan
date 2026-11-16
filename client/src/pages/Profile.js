@@ -1,173 +1,200 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Activity, ArrowRight, Check, ChevronDown, HeartPulse, Pencil, Ruler, Shield, UserRound, Weight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import './Profile.css';
+
+const lifestyles = [
+  { value: 'Sedentary', label: 'Light' },
+  { value: 'Moderate', label: 'Moderate' },
+  { value: 'Active', label: 'Active' },
+];
+const references = [
+  ['Calories', '2,000 kcal'], ['Protein', '50 g'], ['Carbs', '275 g'],
+  ['Fat', '65 g'], ['Sugar', '50 g'], ['Sodium', '2,300 mg'],
+];
+const measurements = [
+  { name: 'Weight', field: 'weight', unit: 'kg', Icon: Weight },
+  { name: 'Height', field: 'height', unit: 'cm', Icon: Ruler },
+  { name: 'BMI', field: 'bmi', Icon: Activity },
+];
+const healthFields = [
+  ['allergies', 'Allergies'],
+  ['medical_conditions', 'Health conditions'],
+];
+
+function toForm(profile) {
+  return {
+    weight: profile?.weight ?? '',
+    height: profile?.height ?? '',
+    lifestyle_type: profile?.lifestyle_type ?? '',
+    allergies: profile?.allergies?.join(', ') ?? '',
+    medical_conditions: profile?.medical_conditions?.join(', ') ?? '',
+  };
+}
 
 export default function Profile() {
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
-  const [form, setForm] = useState({ weight: '', height: '', lifestyle_type: 'Active', medical_conditions: '', allergies: '' });
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
+  const [form, setForm] = useState(() => toForm());
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+  const editTitle = useRef(null);
+  const editButton = useRef(null);
+  const restoreFocus = useRef(false);
 
   useEffect(() => {
-    api.get('/health-profiles').then(r => {
-      if (r.data) {
-        setProfile(r.data);
-        setForm({
-          weight: r.data.weight,
-          height: r.data.height,
-          lifestyle_type: r.data.lifestyle_type,
-          medical_conditions: r.data.medical_conditions?.join(', ') || '',
-          allergies: r.data.allergies?.join(', ') || '',
-        });
-      }
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+    const controller = new AbortController();
+    api.get('/health-profiles', { signal: controller.signal })
+      .then(({ data }) => setProfile(data))
+      .catch(() => { if (!controller.signal.aborted) setLoadError(true); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [attempt]);
 
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setSaving(true); setError(''); setSuccess('');
+  useEffect(() => {
+    if (editing) editTitle.current?.focus();
+    else if (restoreFocus.current) {
+      restoreFocus.current = false;
+      editButton.current?.focus();
+    }
+  }, [editing]);
+
+  function beginEdit() {
+    setForm(toForm(profile));
+    setSaved(false);
+    setError('');
+    setEditing(true);
+  }
+
+  function closeEditor() {
+    restoreFocus.current = true;
+    setEditing(false);
+  }
+
+  async function save(event) {
+    event.preventDefault();
+    if (saving) return;
+    setSaving(true);
+    setError('');
+    const split = value => [...new Set(value.split(/[,\n]/).map(entry => entry.trim()).filter(Boolean))];
     try {
-      const payload = {
+      const { data } = await api.put('/health-profiles', {
         weight: Number(form.weight),
         height: Number(form.height),
         lifestyle_type: form.lifestyle_type,
-        medical_conditions: form.medical_conditions ? form.medical_conditions.split(',').map(s => s.trim()).filter(Boolean) : [],
-        allergies: form.allergies ? form.allergies.split(',').map(s => s.trim()).filter(Boolean) : [],
-      };
-      const r = await api.put('/health-profiles', payload);
-      setProfile(r.data);
-      setSuccess('Health profile updated!');
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) { setError(err.response?.data?.message || 'Error saving'); }
-    finally { setSaving(false); }
-  };
+        allergies: split(form.allergies),
+        medical_conditions: split(form.medical_conditions),
+      });
+      setProfile(data);
+      setSaved(true);
+      closeEditor();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Couldn’t save your profile. Try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
 
-  const bmi = profile ? (profile.weight / Math.pow(profile.height / 100, 2)).toFixed(1) : null;
-  const bmiStatus = bmi ? (bmi < 18.5 ? ['Underweight', 'tag-warn'] : bmi < 25 ? ['Normal', 'tag-green'] : bmi < 30 ? ['Overweight', 'tag-warn'] : ['Obese', 'tag-danger']) : null;
-
-  if (loading) return <div className="loading"><div className="spinner" />Loading profile...</div>;
+  const nameParts = [user?.name?.first?.trim(), user?.name?.last?.trim()].filter(Boolean);
+  const name = nameParts.join(' ') || 'My account';
+  const activity = lifestyles.find(item => item.value === profile?.lifestyle_type);
+  const set = (field, value) => setForm(previous => ({ ...previous, [field]: value }));
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <h2>My Profile</h2>
-        <p>Manage your health profile and personal settings</p>
-      </div>
+    <div className="page profile-page">
+      <header className="profile-heading"><h1>Profile</h1><p>Manage your measurements and health details.</p></header>
+      <section className="profile-identity" aria-label="Your account">
+        <span className="profile-avatar" aria-hidden="true">
+          {nameParts.length ? nameParts.map(part => part[0]).join('').toUpperCase() : <UserRound size={26} />}
+        </span>
+        <div><h2>{name}</h2>{user?.email && <p>{user.email}</p>}</div>
+      </section>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 20 }}>
-        {/* User info card */}
-        <div>
-          <div className="card" style={{ marginBottom: 16, textAlign: 'center' }}>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), var(--accent2))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: '2rem' }}>
-              {user?.name?.first?.[0]}{user?.name?.last?.[0]}
+      {loading ? <p role="status" className="loading"><span className="spinner" aria-hidden="true" />Loading profile…</p>
+        : loadError ? <section className="card profile-load-error" aria-label="Health profile">
+          <p role="alert">Your health profile couldn’t load.</p>
+          <button className="btn btn-outline" type="button" onClick={() => {
+            setLoadError(false);
+            setLoading(true);
+            setAttempt(previous => previous + 1);
+          }}>Try again</button>
+        </section> : <>
+          <div className="profile-status" role="status">{saved && <p><Check size={17} aria-hidden="true" /> Profile saved</p>}</div>
+          {editing ? <form className="card profile-editor" onSubmit={save} aria-labelledby="profile-edit-title">
+            <h2 id="profile-edit-title" tabIndex={-1} ref={editTitle}>{profile ? 'Edit health profile' : 'Set up health profile'}</h2>
+            <fieldset disabled={saving}>
+              <div className="profile-measure-fields">
+                {measurements.slice(0, 2).map(({ name, field, unit }) => <label key={field}>
+                  <span>{name}</span>
+                  <span className="profile-unit-input"><input className="form-input" type="number" step="any" min="0.1" inputMode="decimal"
+                    aria-label={`${name} in ${unit === 'kg' ? 'kilograms' : 'centimeters'}`} value={form[field]} required
+                    onChange={event => set(field, event.target.value)} /><span aria-hidden="true">{unit}</span></span>
+                </label>)}
+              </div>
+              <fieldset className="profile-activity">
+                <legend>Activity level</legend>
+                <div className="profile-options">
+                  {lifestyles.map(({ value, label }) => <label key={value}>
+                    <input type="radio" name="activity" value={value} checked={form.lifestyle_type === value} required onChange={() => set('lifestyle_type', value)} />
+                    <span>{label}</span>
+                  </label>)}
+                </div>
+              </fieldset>
+              <div className="profile-health-fields">
+                {healthFields.map(([field, label]) => <label key={field}>
+                  <span>{label} <small>Optional</small></span>
+                  <textarea className="form-input" rows={2} placeholder="Separate entries with commas"
+                    value={form[field]} onChange={event => set(field, event.target.value)} />
+                </label>)}
+              </div>
+            </fieldset>
+            {error && <p className="alert-box alert-error" role="alert">{error}</p>}
+            <div className="profile-form-actions">
+              <button className="btn btn-outline" type="button" disabled={saving} onClick={closeEditor}>Cancel</button>
+              <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
             </div>
-            <h3 style={{ fontWeight: 800 }}>{user?.name?.first} {user?.name?.last}</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginTop: 4 }}>{user?.email}</p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontFamily: 'Space Mono', marginTop: 4 }}>{user?.user_id}</p>
-            {user?.date_of_birth && (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: 8 }}>
-                Age: <strong style={{ color: 'var(--accent)' }}>{user?.age}</strong> years
-              </p>
-            )}
-          </div>
+          </form> : <div className="profile-sections">
+            <section className="card profile-card" aria-labelledby="measurements-title">
+              <div className="profile-card-heading">
+                <span className="profile-icon"><HeartPulse size={20} aria-hidden="true" /></span>
+                <div><h2 id="measurements-title">Health overview</h2>{activity && <p>{activity.label} activity</p>}</div>
+                {profile && <button type="button" className="btn btn-outline" ref={editButton} onClick={beginEdit}><Pencil size={15} aria-hidden="true" /> Edit</button>}
+              </div>
+              {profile ? <dl className="profile-measurements">
+                {measurements.map(({ name, field, unit, Icon }) => <div key={field}>
+                  <dt><Icon size={15} aria-hidden="true" />{name}</dt>
+                  <dd>{Number(profile[field]) > 0 ? profile[field] : '—'}{unit && Number(profile[field]) > 0 && <small> {unit}</small>}</dd>
+                </div>)}
+              </dl> : <div className="profile-empty">
+                <p>Add your height, weight, and activity level to see them here.</p>
+                <button type="button" className="btn btn-primary" ref={editButton} onClick={beginEdit}>Set up health profile <ArrowRight size={17} aria-hidden="true" /></button>
+              </div>}
+            </section>
+            <section className="card profile-card" aria-labelledby="health-details-title">
+              <div className="profile-card-heading">
+                <span className="profile-icon secondary"><Shield size={20} aria-hidden="true" /></span>
+                <div><h2 id="health-details-title">Health details</h2></div>
+              </div>
+              <dl className="profile-details">
+                {healthFields.map(([field, label]) => <div key={field}>
+                  <dt>{label}</dt>
+                  <dd>{profile?.[field]?.length ? <ul>{profile[field].map((entry, index) => <li key={index}>{entry}</li>)}</ul> : 'None added'}</dd>
+                </div>)}
+              </dl>
+            </section>
+          </div>}
+        </>}
 
-          {profile && bmi && (
-            <div className="card">
-              <h3 style={{ fontSize: '0.78rem', fontWeight: 800, marginBottom: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Health Stats</h3>
-              <div className="nutrient-row">
-                <span style={{ fontSize: '0.85rem' }}>Weight</span>
-                <span style={{ fontFamily: 'Space Mono', color: 'var(--accent)' }}>{profile.weight} kg</span>
-              </div>
-              <div className="nutrient-row">
-                <span style={{ fontSize: '0.85rem' }}>Height</span>
-                <span style={{ fontFamily: 'Space Mono', color: 'var(--accent)' }}>{profile.height} cm</span>
-              </div>
-              <div className="nutrient-row">
-                <span style={{ fontSize: '0.85rem' }}>BMI</span>
-                <div className="flex-center gap-8">
-                  <span style={{ fontFamily: 'Space Mono', color: 'var(--accent)' }}>{bmi}</span>
-                  <span className={`tag ${bmiStatus[1]}`}>{bmiStatus[0]}</span>
-                </div>
-              </div>
-              <div className="nutrient-row">
-                <span style={{ fontSize: '0.85rem' }}>Lifestyle</span>
-                <span className="tag tag-blue">{profile.lifestyle_type}</span>
-              </div>
-              {profile.medical_conditions?.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 6, fontFamily: 'Space Mono' }}>CONDITIONS</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {profile.medical_conditions.map(c => <span key={c} className="tag tag-warn">{c}</span>)}
-                  </div>
-                </div>
-              )}
-              {profile.allergies?.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 6, fontFamily: 'Space Mono' }}>ALLERGIES</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {profile.allergies.map(a => <span key={a} className="tag tag-danger">{a}</span>)}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Edit form */}
-        <div className="card">
-          <h3 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: 20, color: 'var(--text-dim)' }}>
-            {profile ? 'UPDATE' : 'CREATE'} HEALTH PROFILE
-          </h3>
-          {success && <div className="alert-box alert-success">{success}</div>}
-          {error && <div className="alert-box alert-error">{error}</div>}
-          <form onSubmit={handleSave}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
-              <div className="form-group">
-                <label className="form-label">Weight (kg)</label>
-                <input className="form-input" type="number" min="1" value={form.weight} onChange={e => setForm(f => ({ ...f, weight: e.target.value }))} placeholder="55" required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Height (cm)</label>
-                <input className="form-input" type="number" min="1" value={form.height} onChange={e => setForm(f => ({ ...f, height: e.target.value }))} placeholder="165" required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Lifestyle</label>
-                <select className="form-input" value={form.lifestyle_type} onChange={e => setForm(f => ({ ...f, lifestyle_type: e.target.value }))}>
-                  <option>Active</option>
-                  <option>Sedentary</option>
-                  <option>Moderate</option>
-                </select>
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Medical Conditions (comma-separated)</label>
-              <input className="form-input" value={form.medical_conditions} onChange={e => setForm(f => ({ ...f, medical_conditions: e.target.value }))} placeholder="Diabetes, Hypertension" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Allergies (comma-separated)</label>
-              <input className="form-input" value={form.allergies} onChange={e => setForm(f => ({ ...f, allergies: e.target.value }))} placeholder="Peanuts, Gluten, Dust" />
-            </div>
-            <button className="btn btn-primary" style={{ marginTop: 8 }} disabled={saving}>
-              {saving ? 'Saving...' : '✓ Save Health Profile'}
-            </button>
-          </form>
-
-          <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 800, marginBottom: 12, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Daily Intake Limits</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
-              {[['Calories', '2000 kcal'], ['Sugar', '50 g'], ['Sodium', '2300 mg'], ['Fat', '65 g'], ['Protein', '50 g']].map(([k, v]) => (
-                <div key={k} style={{ background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'Space Mono', marginBottom: 4 }}>{k}</div>
-                  <div style={{ fontWeight: 800, color: 'var(--accent)', fontSize: '0.9rem', fontFamily: 'Space Mono' }}>{v}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      <details className="card profile-references">
+        <summary>Daily nutrition reference values <ChevronDown size={19} aria-hidden="true" /></summary>
+        <dl>{references.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+      </details>
     </div>
   );
 }

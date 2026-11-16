@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import FoodProducts from './pages/FoodProducts';
 import LogFood from './pages/LogFood';
+import PhotoLog from './pages/PhotoLog';
 import Alerts from './pages/Alerts';
 import Profile from './pages/Profile';
 
@@ -33,7 +34,8 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard" />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="food-products" element={<FoodProducts />} />
-            <Route path="log-food" element={<LogFood />} />
+            <Route path="log-food" element={<PhotoLog />} />
+            <Route path="log-food/manual" element={<LogFood />} />
             <Route path="alerts" element={<Alerts />} />
             <Route path="profile" element={<Profile />} />
           </Route>

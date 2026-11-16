@@ -4,3 +4,9 @@ client/node_modules/
 client/build/
 *.log
 .DS_Store
+android/.gradle/
+android/**/build/
+android/local.properties
+*.apk
+*.jks
+*.keystore

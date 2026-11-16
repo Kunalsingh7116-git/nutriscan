@@ -42,6 +42,44 @@ So I built **NutriScan** — a full-stack web app that lets you log what you eat
 
 ## ⚡ FEATURES
 
+### Android
+
+The Android app opens NutriScan's mobile interface and uses the same server for
+sign-in, profile data, and meal scans. It connects to
+`https://nutriscan-w116.onrender.com` by default.
+
+To use your development server, start NutriScan in production mode so Express
+serves the frontend build. On an Android device connected to the same Wi-Fi,
+press Back from the first app screen, choose **Change server**, and enter your
+computer's private Wi-Fi address and server port, such as
+`http://192.168.1.100:5000`. The Android Emulator can use `http://10.0.2.2:5000`.
+Configure provider keys on the backend server you connect to.
+
+Build the installable development APK with JDK 17 and Android SDK 34:
+
+```powershell
+cd android
+.\gradlew.bat assembleDebug
+```
+
+The APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`.
+Pass `-PnutriscanServer=http://192.168.1.100:5000` to set a different initial
+server for a particular build.
+
+### Photo meal logging
+
+Open **Food log** and take a photo or upload one. NutriScan estimates the foods,
+portions, and nutrition, asks a quick multiple-choice question when needed, and
+adds the reviewed meal to your daily totals. **Try an example scan** previews the
+flow without writing an entry.
+
+To enable real scans, set `GEMINI_API_KEY` or `OPENAI_API_KEY` in the root `.env`
+file and restart the server. If both keys are set, scans use Gemini.
+`GEMINI_VISION_MODEL` defaults to `gemini-3.1-flash-lite` and `OPENAI_VISION_MODEL`
+defaults to `gpt-4o-mini`. Photos are sent to the selected provider for analysis.
+NutriScan saves the confirmed food and nutrition estimates in
+MongoDB and leaves the photo out of the meal record.
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                                                                       │

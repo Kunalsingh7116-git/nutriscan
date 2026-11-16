@@ -1,20 +1,18 @@
 const mongoose = require('mongoose');
+const { randomUUID } = require('node:crypto');
+const { mealItemSchema } = require('./mealItem');
 
 const ConsumptionRecordSchema = new mongoose.Schema({
-  record_id: { type: String, unique: true },
+  record_id: { type: String, unique: true, default: () => randomUUID() },
   user_id: { type: String, required: true },
-  product_id: { type: String, required: true },
+  product_id: { type: String, required() { return !this.meal_items?.length; } },
+  meal_name: String,
+  meal_items: { type: [mealItemSchema], default: undefined },
   quantity: { type: Number, required: true, min: 0 },
   date: { type: String, required: true },
   time: { type: String, required: true },
 }, { timestamps: true });
 
-ConsumptionRecordSchema.pre('save', async function (next) {
-  if (!this.record_id) {
-    const count = await mongoose.model('ConsumptionRecord').countDocuments();
-    this.record_id = `C${String(count + 101).padStart(3, '0')}`;
-  }
-  next();
-});
+ConsumptionRecordSchema.index({ user_id: 1, date: -1, time: -1 });
 
 module.exports = mongoose.model('ConsumptionRecord', ConsumptionRecordSchema);

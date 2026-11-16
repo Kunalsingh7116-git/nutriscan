@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../utils/api';
+import { dateKey, timeKey } from '../utils/mealDate';
 
 export default function LogFood() {
-  const today = new Date().toISOString().split('T')[0];
-  const now = new Date().toTimeString().slice(0, 5);
+  const today = dateKey();
+  const now = timeKey();
 
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({ product_id: '', quantity: 1, date: today, time: now });
@@ -20,7 +22,7 @@ export default function LogFood() {
 
   const fetchLogs = async (date) => {
     const r = await api.get(`/consumption?date=${date}`);
-    const enriched = await Promise.all(r.data.map(async (log) => {
+    const enriched = await Promise.all(r.data.filter(log => log.product_id).map(async (log) => {
       const p = await api.get(`/food-products/${log.product_id}`).catch(() => null);
       return { ...log, product: p?.data };
     }));
@@ -57,12 +59,13 @@ export default function LogFood() {
 
   return (
     <div className="page">
+      <Link className="inline-link back-link" to="/log-food">Back to photo logging</Link>
       <div className="page-header">
-        <h2>Log Food</h2>
-        <p>Track your consumption and monitor daily intake</p>
+        <h2>Log from food library</h2>
+        <p>Choose a product and the number of servings.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: 20 }}>
+      <div className="manual-log-grid">
         {/* Log form */}
         <div>
           <div className="card" style={{ marginBottom: 16 }}>
@@ -119,7 +122,7 @@ export default function LogFood() {
         </div>
 
         {/* Logs for selected date */}
-        <div className="card">
+        <div className="card manual-log-records">
           <h3 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: 16, color: 'var(--text-dim)' }}>
             CONSUMPTION RECORDS · {form.date}
           </h3>

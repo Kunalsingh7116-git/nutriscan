@@ -9,6 +9,8 @@ const DailyIntakeSchema = new mongoose.Schema({
   total_sodium: { type: Number, default: 0 },
   total_fat: { type: Number, default: 0 },
   total_protein: { type: Number, default: 0 },
+  total_carbs: { type: Number, default: 0 },
+  total_fiber: { type: Number, default: 0 },
 }, { timestamps: true });
 
 DailyIntakeSchema.index({ user_id: 1, date: 1 }, { unique: true });

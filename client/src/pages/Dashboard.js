@@ -1,154 +1,152 @@
-import React, { useEffect, useState } from 'react';
-import { RadialBarChart, RadialBar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { ArrowRight, CalendarDays, Camera, ChevronLeft, ChevronRight, CircleCheck, Droplet, Flame, Leaf, Utensils, Wheat, Zap } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../context/AuthContext';
+import { dateKey, mealTime } from '../utils/mealDate';
 import api from '../utils/api';
 
-const LIMITS = { calories: 2000, sugar: 50, sodium: 2300, fat: 65, protein: 50 };
+const metrics = [
+  { key: 'calories', name: 'Calories', unit: 'kcal', goal: 2000, Icon: Flame, tint: 'tangerine' },
+  { key: 'protein', name: 'Protein', unit: 'g', goal: 50, Icon: Zap, tint: 'mint' },
+  { key: 'carbs', name: 'Carbs', unit: 'g', goal: 275, Icon: Wheat, tint: 'lilac' },
+  { key: 'fat', name: 'Fat', unit: 'g', goal: 65, Icon: Droplet, tint: 'gold' },
+];
+const number = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
 
-function NutrientBar({ label, value, limit, unit, color }) {
-  const pct = Math.min((value / limit) * 100, 100);
-  const cls = pct > 100 ? 'progress-danger' : pct > 80 ? 'progress-warn' : 'progress-green';
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <div className="flex-between" style={{ marginBottom: 4 }}>
-        <span style={{ fontSize: '0.82rem', color: 'var(--text-dim)', fontWeight: 600 }}>{label}</span>
-        <span style={{ fontSize: '0.78rem', fontFamily: 'Space Mono', color: pct > 100 ? 'var(--danger)' : 'var(--text-muted)' }}>
-          {Math.round(value)}/{limit}{unit}
-        </span>
-      </div>
-      <div className="progress-bar">
-        <div className={`progress-fill ${cls}`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
+function daysEnding(date) {
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(`${date}T12:00`);
+    day.setDate(day.getDate() + index - 6);
+    return { date: dateKey(day), label: day.toLocaleDateString(undefined, { weekday: 'short' }) };
+  });
 }
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const today = new Date().toISOString().split('T')[0];
-  const [intake, setIntake] = useState(null);
-  const [alerts, setAlerts] = useState([]);
-  const [weekIntake, setWeekIntake] = useState([]);
-  const [recentLogs, setRecentLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { state } = useLocation();
+  const today = dateKey();
+  const [date, setDate] = useState(state?.loggedDate || today);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    Promise.all([
-      api.get(`/daily-intake?date=${today}`),
-      api.get('/alerts'),
-      api.get('/daily-intake'),
-      api.get(`/consumption?date=${today}`),
-    ]).then(([intakeR, alertsR, weekR, logsR]) => {
-      setIntake(intakeR.data[0] || null);
-      setAlerts(alertsR.data.filter(a => a.status === 'Unread').slice(0, 3));
-      const last7 = weekR.data.slice(0, 7).reverse().map(d => ({
-        date: d.date?.slice(5),
-        cal: d.total_calories,
-      }));
-      setWeekIntake(last7);
-      setRecentLogs(logsR.data.slice(0, 5));
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, [today]);
+    const controller = new AbortController();
+    const config = { signal: controller.signal };
+    Promise.all([api.get('/daily-intake', config), api.get('/consumption', { ...config, params: { date } })])
+      .then(([intake, meals]) => setData({ date, intake: intake.data, meals: meals.data }))
+      .catch(() => { if (!controller.signal.aborted) setError(true); });
+    return () => controller.abort();
+  }, [date, attempt]);
 
-  if (loading) return <div className="loading"><div className="spinner" />Loading dashboard...</div>;
+  const selected = new Date(`${date}T12:00`);
+  const dateLabel = date === today ? 'Today' : selected.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const activeData = data?.date === date ? data : null;
+  const intake = activeData?.intake.find(item => item.date === date);
+  const meals = activeData?.meals || [];
+  const week = daysEnding(date).map(day => {
+    const match = activeData?.intake.find(item => item.date === day.date);
+    return { ...day, calories: Math.round(match?.total_calories || 0) };
+  });
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const firstName = user?.name?.first?.trim();
 
-  const todayIntake = intake || { total_calories: 0, total_sugar: 0, total_sodium: 0, total_fat: 0, total_protein: 0 };
-  const calPct = Math.round((todayIntake.total_calories / LIMITS.calories) * 100);
+  function moveDate(step) {
+    const next = new Date(selected);
+    next.setDate(next.getDate() + step);
+    setError(false);
+    setDate(dateKey(next));
+  }
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <h2>Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, {user?.name?.first} 👋</h2>
-        <p className="mono">{new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-      </div>
-
-      {/* Top stats */}
-      <div className="card-grid card-grid-4" style={{ marginBottom: 20 }}>
-        {[
-          { label: 'Calories', value: Math.round(todayIntake.total_calories), limit: LIMITS.calories, unit: 'kcal', color: '#00e5a0' },
-          { label: 'Sugar', value: Math.round(todayIntake.total_sugar), limit: LIMITS.sugar, unit: 'g', color: '#00b8d9' },
-          { label: 'Sodium', value: Math.round(todayIntake.total_sodium), limit: LIMITS.sodium, unit: 'mg', color: '#ff6b35' },
-          { label: 'Fat', value: Math.round(todayIntake.total_fat), limit: LIMITS.fat, unit: 'g', color: '#a855f7' },
-        ].map(s => {
-          const pct = Math.min(Math.round((s.value / s.limit) * 100), 100);
-          const over = s.value > s.limit;
-          return (
-            <div key={s.label} className="stat-card">
-              <div className="stat-label">{s.label}</div>
-              <div className="stat-value" style={{ color: over ? 'var(--danger)' : s.color }}>{s.value}</div>
-              <div className="stat-sub">{s.unit} · {pct}% of {s.limit}</div>
-              <div className="progress-bar" style={{ marginTop: 8 }}>
-                <div className="progress-fill" style={{ width: `${pct}%`, background: over ? 'var(--danger)' : s.color }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-        {/* Nutrient breakdown */}
-        <div className="card">
-          <h3 style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: 16, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Today's Nutrients</h3>
-          <NutrientBar label="Calories" value={todayIntake.total_calories} limit={LIMITS.calories} unit="kcal" />
-          <NutrientBar label="Sugar" value={todayIntake.total_sugar} limit={LIMITS.sugar} unit="g" />
-          <NutrientBar label="Sodium" value={todayIntake.total_sodium} limit={LIMITS.sodium} unit="mg" />
-          <NutrientBar label="Fat" value={todayIntake.total_fat} limit={LIMITS.fat} unit="g" />
-          <NutrientBar label="Protein" value={todayIntake.total_protein} limit={LIMITS.protein} unit="g" />
+    <div className="page dashboard">
+      <header className="overview-intro">
+        <div>
+          <h1>{greeting}{firstName ? `, ${firstName}` : ''}.</h1>
+          <p>Here’s your nutrition at a glance.</p>
         </div>
+        <div className="day-picker" aria-label="Nutrition date">
+          <button className="icon-button" type="button" onClick={() => moveDate(-1)} aria-label="Previous day"><ChevronLeft size={17} /></button>
+          <span><CalendarDays size={15} aria-hidden="true" />{dateLabel}</span>
+          <button className="icon-button" type="button" onClick={() => moveDate(1)} disabled={date >= today} aria-label="Next day"><ChevronRight size={17} /></button>
+        </div>
+      </header>
 
-        {/* Weekly calorie chart */}
-        <div className="card">
-          <h3 style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: 16, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Weekly Calories</h3>
-          {weekIntake.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={weekIntake} barSize={20}>
-                <XAxis dataKey="date" stroke="#5a7a72" tick={{ fontSize: 11, fontFamily: 'Space Mono' }} />
-                <YAxis stroke="#5a7a72" tick={{ fontSize: 11, fontFamily: 'Space Mono' }} />
-                <Tooltip contentStyle={{ background: '#111518', border: '1px solid #1f2b2e', borderRadius: 8, fontSize: '0.8rem' }} />
-                <Bar dataKey="cal" fill="#00e5a0" radius={[4, 4, 0, 0]} />
+      {state?.loggedDate && <div className="save-notice" role="status"><CircleCheck size={18} /> Meal added to your food log.</div>}
+      <section className="scan-hero" aria-labelledby="scan-hero-title">
+        <div className="scan-hero-copy">
+          <div className="scan-kicker"><Camera size={15} aria-hidden="true" /> PHOTO LOGGING</div>
+          <h2 id="scan-hero-title">Snap it. Log it.</h2>
+          <p>Take a photo of your meal and get a quick estimate of what’s on your plate.</p>
+          <Link className="scan-cta" to="/log-food"><Camera size={19} aria-hidden="true" /> Scan a meal <ArrowRight size={17} aria-hidden="true" /></Link>
+        </div>
+        <div className="scan-hero-art" aria-hidden="true">
+          <div className="scan-frame"><i /><i /><i /><i /><span /></div>
+        </div>
+      </section>
+
+      <section className="nutrition-section" aria-labelledby="nutrition-title" aria-busy={!activeData && !error}>
+        <div className="section-heading">
+          <div><h2 id="nutrition-title">Daily nutrition</h2><p>Progress toward your daily reference values</p></div>
+          <Leaf size={20} aria-hidden="true" />
+        </div>
+        {error && <div className="alert-box alert-error" role="alert">Nutrition data couldn’t load. <button className="text-button" onClick={() => { setError(false); setAttempt(attempt + 1); }}>Try again</button></div>}
+        <div className="metric-grid">
+          {metrics.map(({ key, name, unit, goal, Icon, tint }) => {
+            const value = intake?.['total_' + key] || 0;
+            const progress = Math.min(100, Math.round(value / goal * 100));
+            return (
+              <article className={`metric-card ${tint}`} key={key}>
+                <div className="metric-label"><span className="metric-icon"><Icon size={18} aria-hidden="true" /></span><h3>{name}</h3></div>
+                <div className="metric-value">{activeData ? number.format(value) : '–'} <span>{unit}</span></div>
+                <span className="metric-goal">of {number.format(goal)} {unit}</span>
+                <div className="metric-track" role="progressbar" aria-label={name + ' reference progress'} aria-valuenow={activeData ? progress : undefined}>
+                  <div style={{ width: `${progress}%` }} />
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <div className="insights-grid">
+        <section className="card insights-card">
+          <div className="section-heading">
+            <div><h2>{date === today ? 'Today’s meals' : 'Meals'}</h2><p>{activeData ? `${meals.length} ${meals.length === 1 ? 'entry' : 'entries'} logged` : 'Recent entries'}</p></div>
+            <Link className="inline-link" to="/log-food">Food log <ArrowRight size={15} aria-hidden="true" /></Link>
+          </div>
+          {meals.length ? <ul className="meal-list">
+            {meals.slice(0, 5).map(meal => (
+              <li key={meal.record_id}>
+                <span className="metric-icon mint"><Utensils size={17} aria-hidden="true" /></span>
+                <div className="meal-entry-name"><strong>{meal.display_name}</strong><small>{mealTime(meal.date, meal.time)}{meal.meal_items?.length ? ` · ${meal.meal_items.length} ${meal.meal_items.length === 1 ? 'food' : 'foods'}` : ''}</small></div>
+                <span className="meal-cal">{number.format(meal.nutrients.calories)} <small>kcal</small></span>
+              </li>
+            ))}
+          </ul> : <div className="dashboard-empty">
+            <span className="empty-glyph"><Utensils size={23} aria-hidden="true" /></span>
+            <strong>{activeData ? 'No meals logged yet' : error ? 'Meals unavailable' : 'Loading meals…'}</strong>
+            {activeData && <p>Your meals will show up here after you log them.</p>}
+          </div>}
+        </section>
+        <section className="card insights-card">
+          <div className="section-heading"><div><h2>Calorie trend</h2><p>Daily intake over 7 days</p></div></div>
+          <div className="weekly-chart" role="img" aria-label={activeData ? week.map(day => `${day.label} ${day.calories} kcal`).join(', ') : 'Calorie trend unavailable'}>
+            <ResponsiveContainer width="100%" height={153}>
+              <BarChart data={week} margin={{ top: 8, right: 5, left: 0, bottom: 0 }} barSize={17}>
+                <CartesianGrid vertical={false} stroke="#e9ede8" strokeDasharray="3 4" />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#52645b' }} />
+                <YAxis domain={[0, max => Math.max(max, 2000)]} tickCount={3} width={38} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#52645b' }} />
+                <Tooltip cursor={{ fill: '#edf5ef' }} formatter={value => [`${value} kcal`, 'Calories']} />
+                <Bar dataKey="calories" minPointSize={3} radius={[5, 5, 0, 0]}>
+                  {week.map(day => <Cell key={day.date} fill={day.date === date ? '#28724e' : '#9bc2a7'} />)}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
-          ) : (
-            <div className="empty-state"><div className="empty-icon">📈</div><p>Log food to see trends</p></div>
-          )}
-        </div>
-      </div>
-
-      {/* Alerts + recent logs */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <div className="card">
-          <h3 style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: 16, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            🔔 Active Alerts
-          </h3>
-          {alerts.length === 0 ? (
-            <div className="empty-state"><div className="empty-icon">✅</div><p>No active alerts</p></div>
-          ) : alerts.map(a => (
-            <div key={a._id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-              <div className="flex-between">
-                <span className={`tag ${a.alert_type.includes('High') ? 'tag-danger' : 'tag-warn'}`}>{a.alert_type}</span>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'Space Mono' }}>{a.date}</span>
-              </div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', marginTop: 4 }}>{a.message}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="card">
-          <h3 style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: 16, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            📋 Today's Logs
-          </h3>
-          {recentLogs.length === 0 ? (
-            <div className="empty-state"><div className="empty-icon">🍽️</div><p>No food logged today</p></div>
-          ) : recentLogs.map(r => (
-            <div key={r._id} className="flex-between" style={{ padding: '9px 0', borderBottom: '1px solid var(--border)' }}>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text)', fontFamily: 'Space Mono' }}>{r.product_id}</span>
-              <div className="flex gap-8">
-                <span className="tag tag-blue">×{r.quantity}</span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{r.time}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+          </div>
+        </section>
       </div>
     </div>
   );

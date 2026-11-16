@@ -1,0 +1,24 @@
+plugins {
+    id 'com.android.application'
+}
+
+def defaultServer = providers.gradleProperty('nutriscanServer')
+    .orElse('https://nutriscan-w116.onrender.com').get()
+
+android {
+    namespace 'com.nutriscan.mobile'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.nutriscan.mobile'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+        buildConfigField 'String', 'DEFAULT_SERVER', groovy.json.JsonOutput.toJson(defaultServer)
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.7.0'
+}
