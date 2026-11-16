@@ -8,6 +8,8 @@ const ConsumptionRecordSchema = new mongoose.Schema({
   product_id: { type: String, required() { return !this.meal_items?.length; } },
   meal_name: String,
   meal_items: { type: [mealItemSchema], default: undefined },
+  photo_id: mongoose.Schema.Types.ObjectId,
+  save_to_library: Boolean,
   quantity: { type: Number, required: true, min: 0 },
   date: { type: String, required: true },
   time: { type: String, required: true },

@@ -6,6 +6,8 @@ const FoodProduct = require('../models/FoodProduct');
 const NutritionDetails = require('../models/NutritionDetails');
 const DailyIntake = require('../models/DailyIntake');
 const Alert = require('../models/Alert');
+const MealPhoto = require('../models/MealPhoto');
+const SavedFood = require('../models/SavedFood');
 const { nutrients, validMealItem } = require('../models/mealItem');
 
 const limits = [
@@ -73,24 +75,52 @@ async function recalculate(userId, date) {
 }
 
 router.post('/meal', auth, async (req, res) => {
-  const { id, title, items, date, time } = req.body;
+  const { id, title, items, date, time, photoId, savedFoodId, saveToLibrary } = req.body || {};
+  const validId = value => typeof value === 'string' && /^[a-f0-9]{24}$/i.test(value);
   if (typeof id !== 'string' || !/^[a-f0-9-]{36}$/i.test(id)
     || typeof title !== 'string' || !title.trim() || title.length > 100
     || !Array.isArray(items) || items.length < 1 || items.length > 12 || !items.every(validMealItem)
     || typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date))
     || new Date(date).toISOString().slice(0, 10) !== date
-    || typeof time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+    || typeof time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)
+    || (photoId !== undefined && !validId(photoId))
+    || (savedFoodId !== undefined && !validId(savedFoodId))
+    || (photoId && savedFoodId)
+    || (saveToLibrary !== undefined && typeof saveToLibrary !== 'boolean')
+    || (saveToLibrary && !photoId)) {
     return res.status(400).json({ message: 'Review your meal and try saving it again.' });
   }
 
   const userId = req.user.userId;
   const recordId = userId + '-' + id;
   try {
-    const record = await updateDay(userId, date, () => ConsumptionRecord.findOneAndUpdate(
-      { record_id: recordId, user_id: userId, date },
-      { $setOnInsert: { meal_name: title.trim(), meal_items: items, quantity: 1, time } },
-      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: false }
-    ));
+    let originalPhotoId;
+    if (savedFoodId) {
+      const saved = await SavedFood.findOne({ _id: savedFoodId, user_id: userId }).select('photo_id').lean();
+      if (!saved) return res.status(404).json({ message: 'This saved food isn’t available.' });
+      originalPhotoId = saved.photo_id;
+    } else if (photoId) {
+      const photo = await MealPhoto.exists({ _id: photoId, user_id: userId });
+      if (!photo) return res.status(404).json({ message: 'This meal photo isn’t available.' });
+      originalPhotoId = photo._id;
+    }
+
+    const record = await updateDay(userId, date, async () => {
+      const meal = await ConsumptionRecord.findOneAndUpdate(
+        { record_id: recordId, user_id: userId, date },
+        { $setOnInsert: {
+          meal_name: title.trim(), meal_items: items, quantity: 1, time,
+          photo_id: originalPhotoId, save_to_library: saveToLibrary === true,
+        } },
+        { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: false }
+      );
+      if (meal.save_to_library) {
+        await SavedFood.updateOne({ source_record: recordId, user_id: userId }, {
+          $setOnInsert: { title: meal.meal_name, items: meal.meal_items, photo_id: meal.photo_id },
+        }, { upsert: true });
+      }
+      return meal;
+    });
     res.status(201).json(record);
   } catch (error) {
     console.error('Meal log failed:', error.name);

@@ -76,9 +76,36 @@ flow without writing an entry.
 To enable real scans, set `GEMINI_API_KEY` or `OPENAI_API_KEY` in the root `.env`
 file and restart the server. If both keys are set, scans use Gemini.
 `GEMINI_VISION_MODEL` defaults to `gemini-3.1-flash-lite` and `OPENAI_VISION_MODEL`
-defaults to `gpt-4o-mini`. Photos are sent to the selected provider for analysis.
-NutriScan saves the confirmed food and nutrition estimates in
-MongoDB and leaves the photo out of the meal record.
+defaults to `gpt-4o-mini`.
+
+Run `npm ci` and `npm ci --prefix client` from the repository root. Copy
+`.env.example` to `.env`, set `MONGODB_URI`, a random `JWT_SECRET`, and
+`NODE_ENV=production`. Run `npm run build` and `npm start`, then open
+[http://localhost:5000/login](http://localhost:5000/login).
+
+The selected provider receives a resized copy for analysis. When you log the
+reviewed meal, NutriScan stores the original photo bytes and the confirmed
+nutrition estimates. Choose **Log & save to library** to keep a reusable copy
+under **Food Library → Saved from photos**, or **Log meal only** to keep the
+photo and estimates in Meal History.
+
+### Verify photo logging on web and Android
+
+1. Start MongoDB and the built website as described above, set a vision provider
+   key, and sign in on the website and the Android app against that server.
+2. In **Food log**, upload or take a photo. Review the results and choose
+   **Add to dashboard → Log & save to library**.
+3. Open **Food Library → Saved from photos**, search by meal or ingredient, and
+   select the entry. Check its photo and estimates, then log it again.
+4. Check **Food log → Meal history**. Both entries should show the selected
+   meal photo. Repeat with a different photo and **Log meal only**. Its
+   thumbnail should appear in history, and the saved food list should stay the same.
+
+JPEG, PNG, WebP, and browser-readable HEIF images up to 10 MB are supported.
+NutriScan keeps the source bytes in MongoDB, deduplicates identical photos per
+account, and serves them only to the signed-in owner. Library entries retain a
+snapshot of the reviewed estimates and remain available if the source meal is
+removed. Older entries without stored photos show a placeholder.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐

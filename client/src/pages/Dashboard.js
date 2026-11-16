@@ -5,6 +5,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { useAuth } from '../context/AuthContext';
 import { dateKey, mealTime } from '../utils/mealDate';
 import api from '../utils/api';
+import StoredMealPhoto from '../components/StoredMealPhoto';
 
 const metrics = [
   { key: 'calories', name: 'Calories', unit: 'kcal', goal: 2000, Icon: Flame, tint: 'tangerine' },
@@ -74,7 +75,9 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {state?.loggedDate && <div className="save-notice" role="status"><CircleCheck size={18} /> Meal added to your food log.</div>}
+      {state?.loggedDate && <div className="save-notice" role="status"><CircleCheck size={18} />
+        {state.savedToLibrary ? 'Meal logged and saved to your Food Library.' : 'Meal added to your food log.'}
+      </div>}
       <section className="scan-hero" aria-labelledby="scan-hero-title">
         <div className="scan-hero-copy">
           <div className="scan-kicker"><Camera size={15} aria-hidden="true" /> PHOTO LOGGING</div>
@@ -120,7 +123,7 @@ export default function Dashboard() {
           {meals.length ? <ul className="meal-list">
             {meals.slice(0, 5).map(meal => (
               <li key={meal.record_id}>
-                <span className="metric-icon mint"><Utensils size={17} aria-hidden="true" /></span>
+                <StoredMealPhoto id={meal.photo_id} alt={meal.photo_id ? `Photo of ${meal.display_name}` : ''} />
                 <div className="meal-entry-name"><strong>{meal.display_name}</strong><small>{mealTime(meal.date, meal.time)}{meal.meal_items?.length ? ` · ${meal.meal_items.length} ${meal.meal_items.length === 1 ? 'food' : 'foods'}` : ''}</small></div>
                 <span className="meal-cal">{number.format(meal.nutrients.calories)} <small>kcal</small></span>
               </li>

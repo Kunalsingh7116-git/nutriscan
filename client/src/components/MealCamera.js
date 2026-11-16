@@ -1,16 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, X } from 'lucide-react';
 
-export function encodePhoto(source, width, height) {
+function photoCanvas(source, width, height, scale = 1) {
   const canvas = document.createElement('canvas');
-  const scale = Math.min(1, 1280 / Math.max(width, height));
   canvas.width = Math.round(width * scale);
   canvas.height = Math.round(height * scale);
   const context = canvas.getContext('2d');
   context.fillStyle = '#fff';
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.drawImage(source, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL('image/jpeg', 0.86);
+  return canvas;
 }
 
 export async function readMealPhoto(file) {
@@ -19,7 +18,8 @@ export async function readMealPhoto(file) {
     const image = new Image();
     image.src = url;
     await image.decode();
-    return encodePhoto(image, image.naturalWidth, image.naturalHeight);
+    const scale = Math.min(1, 1280 / Math.max(image.naturalWidth, image.naturalHeight));
+    return photoCanvas(image, image.naturalWidth, image.naturalHeight, scale).toDataURL('image/jpeg', 0.86);
   } finally {
     URL.revokeObjectURL(url);
   }
@@ -56,7 +56,10 @@ export default function MealCamera({ onCapture, onClose, onFallback }) {
       {error ? <button type="button" className="btn btn-primary" onClick={onFallback}>Choose a photo</button> :
         <button type="button" className="btn btn-primary" disabled={!ready} onClick={() => {
           const source = video.current;
-          onCapture(encodePhoto(source, source.videoWidth, source.videoHeight));
+          photoCanvas(source, source.videoWidth, source.videoHeight).toBlob(photo => {
+            if (photo) onCapture(photo);
+            else setError(true);
+          }, 'image/jpeg', 0.95);
         }}><Camera size={18} /> Take photo</button>}
     </div>
   );

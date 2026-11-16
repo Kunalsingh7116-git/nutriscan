@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import SavedFoods from '../components/SavedFoods';
 
 function AddProductModal({ onClose, onAdded }) {
   const [form, setForm] = useState({ product_name: '', brand: '', category: '', barcode: '', serving_size: '', calories: '', sugar: '', sodium: '', fat: '', protein: '' });
@@ -115,12 +116,13 @@ export default function FoodProducts() {
     <div className="page">
       <div className="page-header flex-between">
         <div>
-          <h2>Food Products</h2>
-          <p>{products.length} products in database</p>
+          <h2>Food Library</h2>
         </div>
         <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Add Product</button>
       </div>
 
+      <SavedFoods />
+      <div className="section-heading"><div><h2>Food products</h2><p>{products.length} products</p></div></div>
       <div className="card mb-16" style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 16px' }}>
         <input className="form-input" style={{ flex: 1, margin: 0 }} placeholder="Search products or brands..." value={search} onChange={e => setSearch(e.target.value)} />
         <select className="form-input" style={{ width: 'auto', margin: 0 }} value={category} onChange={e => setCategory(e.target.value)}>
