@@ -86,7 +86,9 @@ Go to **Food log → Meal history** to check the original photo on the meal entr
 
 To deploy, import the repository into Vercel and keep the root directory at the repository root. The checked-in [Vercel configuration](vercel.json) builds the React app and routes API requests to Express. Add a reachable `MONGODB_URI`, a `JWT_SECRET`, and a photo analysis key to the Vercel project environment.
 
-Google sign-in is optional. Configure a Google OAuth **Web application** client and register the exact `/api/auth/google/callback` URL for the server your users open. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` on the backend. Use a reachable HTTPS server for Google sign-in on Android.
+Google sign-in is optional. Configure a Google OAuth **Web application** client and register the exact `/api/auth/google/callback` URL for the server your users open. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` on the backend.
+
+For Android’s native Google account picker, create an **Android** OAuth client in the same Google Cloud project as the web client. Use package name `com.nutriscan.mobile` and the SHA-1 fingerprint of the certificate used to sign the APK. Keep `GOOGLE_CLIENT_ID` set to the **Web application** client ID on the HTTPS backend. [Android Google sign-in setup](https://developer.android.com/identity/sign-in/credential-manager-siwg-implementation)
 
 ## What I built it with
 

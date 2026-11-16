@@ -1,12 +1,14 @@
 const router = require('express').Router();
 const { randomBytes, createHash } = require('node:crypto');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const GoogleSignIn = require('../models/GoogleSignIn');
 
 const random = () => randomBytes(32).toString('base64url');
 const hash = value => createHash('sha256').update(value).digest('base64url');
 const validToken = value => typeof value === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value);
+const googleClient = new OAuth2Client();
 
 function config() {
   const { GOOGLE_CLIENT_ID: clientId, GOOGLE_CLIENT_SECRET: secret, GOOGLE_REDIRECT_URI: redirect } = process.env;
@@ -26,6 +28,51 @@ router.use((req, res, next) => {
 });
 
 router.get('/config', (req, res) => res.json({ origin: config()?.origin || null }));
+
+router.post('/native/start', async (req, res) => {
+  const settings = config();
+  if (!settings || req.get('origin') !== settings.origin || !settings.origin.startsWith('https:')) {
+    return res.status(503).json({ message: 'Google sign-in requires the live NutriScan server.' });
+  }
+  try {
+    const nonce = random();
+    await GoogleSignIn.create({
+      state: nonce, claimHash: hash(random()), status: 'native',
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+    res.json({ nonce, clientId: settings.clientId });
+  } catch {
+    res.status(500).json({ message: 'Couldn’t start Google sign-in. Try again.' });
+  }
+});
+
+router.post('/native/finish', async (req, res) => {
+  const settings = config();
+  const { nonce, idToken } = req.body || {};
+  if (!settings || req.get('origin') !== settings.origin || !settings.origin.startsWith('https:')
+    || !validToken(nonce) || typeof idToken !== 'string' || !idToken || idToken.length > 10000) {
+    return res.status(400).json({ message: 'Invalid Google sign-in request.' });
+  }
+  let identity;
+  try {
+    const ticket = await googleClient.verifyIdToken({ idToken, audience: settings.clientId });
+    identity = ticket.getPayload();
+    if (identity?.nonce !== nonce) throw new Error('Nonce mismatch');
+  } catch {
+    return res.status(401).json({ message: 'Couldn’t verify your Google account. Try again.' });
+  }
+  try {
+    const flow = await GoogleSignIn.findOneAndDelete({ state: nonce, status: 'native', expiresAt: { $gt: new Date() } });
+    if (!flow) return res.status(410).json({ message: 'This Google sign-in has expired. Start again.' });
+    const account = await findGoogleUser(identity);
+    if (!account) return res.status(400).json({
+      message: 'Couldn’t use this Google account. If you already use this email, sign in with your password.',
+    });
+    return sendSession(res, account);
+  } catch {
+    return res.status(500).json({ message: 'Couldn’t finish Google sign-in. Try again.' });
+  }
+});
 
 router.post('/start', async (req, res) => {
   const settings = config();
@@ -135,13 +182,17 @@ router.post('/claim', async (req, res) => {
     if (flow.status === 'failed') return res.status(400).json({ message: flow.error });
     const account = await User.findOne({ user_id: flow.userId });
     if (!account) return res.status(410).json({ message: 'This Google sign-in has expired. Start again.' });
-    const { user_id, name, email, age } = account;
-    const token = jwt.sign({ userId: user_id, email }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { user_id, name, email, age } });
+    sendSession(res, account);
   } catch (error) {
     console.error('Could not finish Google sign-in:', error.name);
     res.status(500).json({ message: 'Couldn’t finish Google sign-in. Try again.' });
   }
 });
+
+function sendSession(res, account) {
+  const { user_id, name, email, age } = account;
+  const token = jwt.sign({ userId: user_id, email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  return res.json({ token, user: { user_id, name, email, age } });
+}
 
 module.exports = router;

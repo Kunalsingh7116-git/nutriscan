@@ -7,6 +7,7 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.provider.MediaStore;
 import android.text.InputType;
 import android.webkit.CookieManager;
@@ -20,6 +21,16 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 import androidx.core.content.FileProvider;
+import androidx.credentials.CredentialManager;
+import androidx.credentials.CredentialManagerCallback;
+import androidx.credentials.CustomCredential;
+import androidx.credentials.GetCredentialRequest;
+import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.exceptions.GetCredentialCancellationException;
+import androidx.credentials.exceptions.GetCredentialException;
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
+import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -36,6 +47,7 @@ public class MainActivity extends Activity {
     private File cameraFile;
     private boolean showingError;
     private boolean resetHistory;
+    private CancellationSignal googleRequest;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -44,7 +56,7 @@ public class MainActivity extends Activity {
         webView = new WebView(this);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " NutriScanAndroid");
+        settings.setUserAgentString(settings.getUserAgentString() + " NutriScanAndroid NutriScanNativeGoogle");
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
@@ -53,8 +65,13 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                if (!request.isForMainFrame() || sameServer(request.getUrl())) return false;
+                if (!request.isForMainFrame()) return false;
                 Uri url = request.getUrl();
+                if (sameServer(url)) {
+                    if (!"/android/google-sign-in".equals(url.getPath())) return false;
+                    if ("https".equals(url.getScheme())) signInWithGoogle(url);
+                    return true;
+                }
                 if ("https".equals(url.getScheme())) {
                     try {
                         startActivity(new Intent(Intent.ACTION_VIEW, url));
@@ -106,8 +123,52 @@ public class MainActivity extends Activity {
         try {
             connect(parseOrigin(saved));
         } catch (URISyntaxException error) {
-            connect(URI.create("https://nutriscan-w116.onrender.com"));
+            connect(URI.create(BuildConfig.DEFAULT_SERVER));
         }
+    }
+
+    private void signInWithGoogle(Uri url) {
+        String clientId = url.getQueryParameter("client_id");
+        String nonce = url.getQueryParameter("nonce");
+        if (googleRequest != null || clientId == null || nonce == null
+            || !clientId.matches("[A-Za-z0-9.-]+\\.apps\\.googleusercontent\\.com")
+            || !nonce.matches("[A-Za-z0-9_-]{43}")) return;
+        GetSignInWithGoogleOption option = new GetSignInWithGoogleOption.Builder(clientId)
+            .setNonce(nonce).build();
+        GetCredentialRequest request = new GetCredentialRequest.Builder()
+            .addCredentialOption(option).build();
+        googleRequest = new CancellationSignal();
+        CredentialManager.create(this).getCredentialAsync(this, request, googleRequest, this::runOnUiThread,
+            new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
+                @Override
+                public void onResult(GetCredentialResponse response) {
+                    try {
+                        if (!(response.getCredential() instanceof CustomCredential)
+                            || !GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(response.getCredential().getType())) {
+                            completeGoogle(url, nonce, "", "Google returned an unsupported credential.");
+                            return;
+                        }
+                        String token = GoogleIdTokenCredential.createFrom(response.getCredential().getData()).getIdToken();
+                        completeGoogle(url, nonce, token, "");
+                    } catch (Exception error) {
+                        completeGoogle(url, nonce, "", "Couldn’t read your Google credential. Try again.");
+                    }
+                }
+
+                @Override
+                public void onError(GetCredentialException error) {
+                    completeGoogle(url, nonce, "", error instanceof GetCredentialCancellationException
+                        ? "Google sign-in was cancelled." : "Google sign-in couldn’t open. Check that Google Play services is available and try again.");
+                }
+            });
+    }
+
+    private void completeGoogle(Uri origin, String nonce, String token, String error) {
+        googleRequest = null;
+        if (isDestroyed() || !sameServer(origin) || webView.getUrl() == null
+            || !sameServer(Uri.parse(webView.getUrl()))) return;
+        webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('nutriscan:google', {detail:{nonce:"
+            + JSONObject.quote(nonce) + ",token:" + JSONObject.quote(token) + ",error:" + JSONObject.quote(error) + "}}))", null);
     }
 
     private boolean sameServer(Uri url) {
@@ -252,6 +313,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (googleRequest != null) googleRequest.cancel();
         finishPhoto(null);
         cleanupCamera();
         webView.destroy();

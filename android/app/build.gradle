@@ -3,7 +3,7 @@ plugins {
 }
 
 def defaultServer = providers.gradleProperty('nutriscanServer')
-    .orElse('https://nutriscan-w116.onrender.com').get()
+    .orElse('https://nutriscan-six-theta.vercel.app').get()
 
 android {
     namespace 'com.nutriscan.mobile'
@@ -13,12 +13,15 @@ android {
         applicationId 'com.nutriscan.mobile'
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName '1.0'
+        versionCode 2
+        versionName '1.1'
         buildConfigField 'String', 'DEFAULT_SERVER', groovy.json.JsonOutput.toJson(defaultServer)
     }
 }
 
 dependencies {
     implementation 'androidx.core:core:1.7.0'
+    implementation 'androidx.credentials:credentials:1.3.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.3.0'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
 }

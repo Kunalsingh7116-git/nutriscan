@@ -44,6 +44,7 @@ export default function PhotoLog() {
   const uploadInput = useRef(null);
   const captureInput = useRef(null);
   const heading = useRef(null);
+  const librarySheet = useRef(null);
   const request = useRef(null);
   const saveIdentity = useRef(null);
   const originalPhoto = useRef(null);
@@ -100,6 +101,13 @@ export default function PhotoLog() {
 
   const questionIndex = stage === 'question' ? scan.foods.findIndex((food, index) => food.question && answers[index] === undefined) : -1;
   useEffect(() => { heading.current?.focus(); }, [stage, questionIndex]);
+  useEffect(() => {
+    if (stage !== 'library-choice') return;
+    const dialog = librarySheet.current;
+    dialog.showModal();
+    dialog.querySelector('h2').focus();
+    return () => dialog.close();
+  }, [stage]);
 
   function startCamera() {
     setError('');
@@ -268,9 +276,13 @@ export default function PhotoLog() {
           {stage === 'library-error' && <div className="upload-panel">
             <p role="alert">{error}</p><Link className="btn btn-outline" to="/food-products">Back to Food Library</Link>
           </div>}
-          {stage === 'library-choice' && <div className="upload-panel">
-            <h2 tabIndex={-1} ref={heading}>Save this food to your library?</h2>
-            <p>Keep the photo and these nutrition estimates so you can log it again.</p>
+          {stage === 'library-choice' && <dialog ref={librarySheet} className="library-sheet" aria-labelledby="library-sheet-title"
+            aria-describedby="library-sheet-description" onCancel={event => {
+              event.preventDefault();
+              if (!saving && saveChoice === null) { setError(''); setStage('review'); }
+            }}>
+            <h2 tabIndex={-1} id="library-sheet-title">Save this food to your library?</h2>
+            <p id="library-sheet-description">Keep the photo and these nutrition estimates so you can log it again.</p>
             {error && <p className="alert-box alert-error" role="alert">{error}</p>}
             <div className="scan-actions">
               {saveChoice !== false && <button type="button" className="btn btn-primary" disabled={saving} onClick={() => save(items, true)}>
@@ -281,7 +293,7 @@ export default function PhotoLog() {
               </button>}
             </div>
             {saveChoice === null && <button type="button" className="text-button" onClick={() => { setError(''); setStage('review'); }}>Back to review</button>}
-          </div>}
+          </dialog>}
           {(stage === 'preparing' || stage === 'analyzing') && <div className="upload-panel" role="status">
             {photo && stage === 'analyzing' && <img className="meal-photo" src={photo} alt="Meal awaiting analysis" />}
             <div className="spinner" aria-hidden="true" />
@@ -310,11 +322,11 @@ export default function PhotoLog() {
             <button type="button" className="text-button" onClick={() => chooseAnswer(questionIndex, 0)}>Use the estimate</button>
           </div>}
 
-          {stage === 'review' && <div className="photo-review">
+          {hasReview && <div className="photo-review">
             {savedFood ? <StoredMealPhoto id={savedFood.photo_id} className="meal-photo" alt={savedFood.title} />
               : <img className="meal-photo" src={photo} alt={example ? 'Example chicken and quinoa bowl' : 'Your selected meal'} />}
             <div className="review-label">{example ? 'Example scan' : savedFood ? 'From your Food Library' : 'Review your scan'}</div>
-            <h2 tabIndex={-1} ref={heading}>{title}</h2>
+            <h2 tabIndex={-1} ref={stage === 'review' ? heading : null}>{title}</h2>
             <p>Estimated nutrition. Tap a food to change its portion or remove it.</p>
             <div className="review-totals">
               {summary.map(([key, label, unit]) => <div key={key}><span>{label}</span><strong>{totals[key]}<small> {unit}</small></strong></div>)}
@@ -344,7 +356,7 @@ export default function PhotoLog() {
                 </details>;
               })}
             </div>
-            {error && <p className="alert-box alert-error" role="alert">{error}</p>}
+            {stage === 'review' && error && <p className="alert-box alert-error" role="alert">{error}</p>}
             <div className="scan-actions">
               {example ? <button type="button" className="btn btn-primary" onClick={reset}><Check size={16} /> Finish example</button> :
                 <button type="button" className="btn btn-primary" disabled={saving || !items.length} onClick={() => {
