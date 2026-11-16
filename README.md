@@ -1,14 +1,14 @@
 # NutriScan
 
-NutriScan is a nutrition tracker I built for athletes, people who train at the gym, and anyone who wants a clearer view of what they eat.
+**A photo-based meal tracker for athletes, gym-goers, and anyone who wants a clearer view of what they eat.**
 
-[Try NutriScan online](https://nutriscan-six-theta.vercel.app/login) · [Set up Android](#run-on-android)
+[Try the live app](https://nutriscan-six-theta.vercel.app/login) · [See the walkthrough](#see-it-in-action) · [Install and run](#install-and-run) · [Tech stack](#what-i-built-it-with) · [About me](#about-me)
 
 ## Why I built it
 
-When you're training, it's easy to remember what you ate and still have trouble adding up the calories, protein, carbs, and fat. Looking up every ingredient and portion takes time, especially when you're logging meals around workouts.
+When you're training, tracking what you eat can turn into a list of ingredients, portion sizes, and numbers to add up. I wanted to make it easier to keep track of calories, protein, carbs, and fat without looking up every item by hand.
 
-I built NutriScan around a meal photo. The app estimates the foods, portions, and nutrients, then gives you a chance to check and adjust them before saving. I added the Food Library for meals you eat often and a dashboard so you can see how each meal fits into your day.
+I built NutriScan around a meal photo. The app estimates the foods, portions, and nutrients, and you can adjust those estimates before logging the meal. I added the Food Library so you can reuse meals you eat regularly and a dashboard to show how each meal contributes to your daily totals.
 
 If you train, you can use those daily totals to track what you eat around workouts. If you just want to understand your eating habits, the same meal history and weekly calorie trend give you a place to start.
 
@@ -29,7 +29,7 @@ Open the [live site](https://nutriscan-six-theta.vercel.app/login), then registe
 
 Answer any follow-up questions or choose **Use the estimate**. Check the foods and adjust portions before logging. To see what the review screen looks like, choose **Try an example scan**.
 
-![NutriScan meal review with a bowl photo, portions, and nutrition estimates](docs/screenshots/meal-scan-review.png)
+<img src="docs/screenshots/meal-scan-review.png" width="360" alt="Example scan of a chicken and quinoa bowl showing portion and nutrition estimates">
 
 ### 3. Log the meal and decide whether to save it
 
@@ -39,7 +39,7 @@ On a real scan, choose **Add to dashboard**, then **Log & save to library** to k
 
 Open **Food Library → Saved from photos**, search by meal name or ingredient, and select the meal. Review the portions and choose **Add to dashboard** to log it again.
 
-![NutriScan Food Library showing a saved meal with its photo and calorie estimate](docs/screenshots/saved-foods.png)
+<img src="docs/screenshots/saved-foods.png" width="360" alt="Food Library showing a saved meal with its original photo and calorie estimate">
 
 ### 5. Check your history and daily totals
 
@@ -99,4 +99,4 @@ For Android’s native Google account picker, create an **Android** OAuth client
 
 ## About me
 
-I’m **Kunal Singh**, and I built NutriScan to make meal tracking easier to keep up with, whether you’re training regularly or just curious about what you eat. [My GitHub profile](https://github.com/Kunalsingh7116-git)
+I’m **Kunal Singh**, an undergraduate at **NSUT**. NutriScan is my personal open course project. I built it to make everyday meal tracking easier to keep up with. [My GitHub profile](https://github.com/Kunalsingh7116-git)
