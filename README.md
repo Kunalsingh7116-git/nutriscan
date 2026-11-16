@@ -2,14 +2,15 @@
 
 NutriScan is a nutrition tracker I built for athletes, people who train at the gym, and anyone who wants a clearer view of what they eat.
 
-- **Live website:** [PLACEHOLDER — Add your public deployment URL]
-- **Android APK:** [PLACEHOLDER — Add the GitHub Release or APK download URL]
+[Try NutriScan online](https://nutriscan-six-theta.vercel.app/login) · [Set up Android](#run-on-android)
 
 ## Why I built it
 
-Tracking meals can take time, especially when you're trying to keep track of calories, protein, carbs, and fat around a training schedule. Looking up every food and portion by hand can make it harder to log meals consistently.
+When you're training, it's easy to remember what you ate and still have trouble adding up the calories, protein, carbs, and fat. Looking up every ingredient and portion takes time, especially when you're logging meals around workouts.
 
-I built NutriScan around a simple workflow: take a photo, review the app's nutrition estimates, and log the meal. I added a Food Library so you can save and reuse meals you eat often. That makes it useful whether you're tracking meals around workouts or just want to see what you eat from day to day.
+I built NutriScan around a meal photo. The app estimates the foods, portions, and nutrients, then gives you a chance to check and adjust them before saving. I added the Food Library for meals you eat often and a dashboard so you can see how each meal fits into your day.
+
+If you train, you can use those daily totals to track what you eat around workouts. If you just want to understand your eating habits, the same meal history and weekly calorie trend give you a place to start.
 
 ## What you can do
 
@@ -20,21 +21,27 @@ I built NutriScan around a simple workflow: take a photo, review the app's nutri
 
 ## See it in action
 
-These screenshots use a demo meal and a test account.
+### 1. Sign in and open Food log
 
-### 1. Review a meal photo
+Open the [live site](https://nutriscan-six-theta.vercel.app/login), then register or sign in. In **Food log**, choose **Take a photo** or **Upload a photo**. On the hosted site, choose an original image up to 4 MB.
 
-Open **Food log** and take or upload a photo. Check the foods, portions, and nutrition estimates. You can also select **Try an example scan** to see the review screen.
+### 2. Check the scan
+
+Answer any follow-up questions or choose **Use the estimate**. Check the foods and adjust portions before logging. To see what the review screen looks like, choose **Try an example scan**.
 
 ![NutriScan meal review with a bowl photo, portions, and nutrition estimates](docs/screenshots/meal-scan-review.png)
 
-### 2. Save and reuse a meal
+### 3. Log the meal and decide whether to save it
 
-Choose **Add to dashboard → Log & save to library** to keep the meal for later, or **Log meal only** to add it to your history. To reuse it, open **Food Library → Saved from photos**, search for the meal or an ingredient, then select it and confirm the portions.
+On a real scan, choose **Add to dashboard**, then **Log & save to library** to keep the meal for reuse or **Log meal only** to add it to your history.
+
+### 4. Reuse a saved meal
+
+Open **Food Library → Saved from photos**, search by meal name or ingredient, and select the meal. Review the portions and choose **Add to dashboard** to log it again.
 
 ![NutriScan Food Library showing a saved meal with its photo and calorie estimate](docs/screenshots/saved-foods.png)
 
-### 3. Check your history
+### 5. Check your history and daily totals
 
 Go to **Food log → Meal history** to check the original photo on the meal entry. The dashboard shows how the meal contributes to your daily totals.
 
@@ -43,9 +50,11 @@ Go to **Food log → Meal history** to check the original photo on the meal entr
 ### Run the web app locally
 
 1. Install Node.js 20 or later. Start MongoDB locally or have a MongoDB connection string ready.
-2. From the repository root, install the dependencies.
+2. Clone the repository and install the dependencies.
 
    ```sh
+   git clone https://github.com/Kunalsingh7116-git/nutriscan.git
+   cd nutriscan
    npm ci
    npm ci --prefix client
    ```
@@ -60,11 +69,18 @@ Go to **Food log → Meal history** to check the original photo on the meal entr
 
 5. Open [the local sign-in page](http://localhost:5000/login). Register or sign in, then go to **Food log**.
 
-### Use the Android app
+### Run on Android
 
-1. Install the APK from **[PLACEHOLDER — Add APK download URL]**, or build a debug APK from the `android/` folder using JDK 17, Android SDK Platform 34, and the included Gradle wrapper.
-2. Connect the app to your NutriScan server. Press Back from the first screen and choose **Change server**, or set its initial server when building with `-PnutriscanServer=<SERVER_URL>`.
-3. For a local test on a physical phone, use your computer's Wi-Fi address and port. On the Android Emulator, use `http://10.0.2.2:5000`. Keep the local server running while you test.
+1. Install JDK 17 and Android SDK Platform 34. From the repository root on Windows, build a debug APK using the included Gradle wrapper.
+
+   ```powershell
+   cd android
+   .\gradlew.bat assembleDebug "-PnutriscanServer=https://nutriscan-six-theta.vercel.app"
+   ```
+
+   On macOS or Linux, run `./gradlew assembleDebug -PnutriscanServer=https://nutriscan-six-theta.vercel.app` from the `android` folder.
+2. Install `android/app/build/outputs/apk/debug/app-debug.apk` on your phone or emulator. Open NutriScan and sign in.
+3. To use a different server, press Back from the first screen and choose **Change server**. For a local server, use your computer’s Wi-Fi address and port on a physical phone, or `http://10.0.2.2:5000` on the Android Emulator.
 
 ### Hosting and sign-in
 
@@ -81,6 +97,4 @@ Google sign-in is optional. Configure a Google OAuth **Web application** client 
 
 ## About me
 
-I'm **[PLACEHOLDER — Your name]**, the creator of NutriScan.
-
-[PLACEHOLDER — Add a sentence or two about yourself and what got you interested in building a nutrition app.]
+I’m **Kunal Singh**, and I built NutriScan to make meal tracking easier to keep up with, whether you’re training regularly or just curious about what you eat. [My GitHub profile](https://github.com/Kunalsingh7116-git)
