@@ -1,141 +1,86 @@
 # NutriScan
 
-NutriScan tracks nutrition on the web and Android. Analyze a meal photo, review
-its nutrition estimates, and log it. Save meals to your Food Library for reuse,
-and track daily totals, trends, and health profiles. Both clients use the same
-React interface, Express API, and MongoDB database.
+NutriScan is a nutrition tracker I built for athletes, people who train at the gym, and anyone who wants a clearer view of what they eat.
 
-[Open NutriScan](https://nutriscan-six-theta.vercel.app/login).
+- **Live website:** [PLACEHOLDER — Add your public deployment URL]
+- **Android APK:** [PLACEHOLDER — Add the GitHub Release or APK download URL]
 
-## Run the website locally
+## Why I built it
 
-Install Node.js 20 or later and run MongoDB locally, or use a MongoDB Atlas
-connection string. From the repository root, run:
+Tracking meals can take time, especially when you're trying to keep track of calories, protein, carbs, and fat around a training schedule. Looking up every food and portion by hand can make it harder to log meals consistently.
 
-```sh
-npm ci
-npm ci --prefix client
-```
+I built NutriScan around a simple workflow: take a photo, review the app's nutrition estimates, and log the meal. I added a Food Library so you can save and reuse meals you eat often. That makes it useful whether you're tracking meals around workouts or just want to see what you eat from day to day.
 
-Copy [`.env.example`](.env.example) to `.env`. For a local MongoDB server, set
-`MONGODB_URI=mongodb://127.0.0.1:27017/NutriScanDB`. Set `JWT_SECRET` to a long
-random value and set `NODE_ENV=production` so Express serves the built website.
-Leave `PORT=5000` to use the URL below.
+## What you can do
 
-```sh
-npm run build
-npm start
-```
+- **Log meals from a photo or enter them manually.** Review the foods and portion estimates before saving.
+- **Reuse meals from your Food Library.** Save a meal's photo and nutrition details, then search for it by name or ingredient and log it again.
+- **See your meals and daily totals.** Meal History shows the original photo when available. The dashboard shows daily nutrition and a seven-day calorie trend.
+- **Keep a health profile.** Save your height, weight, activity level, allergies, and health conditions.
 
-Open [http://localhost:5000/login](http://localhost:5000/login). For frontend
-development with live reload, set `NODE_ENV=development` and use `npm run dev`.
-The React development server runs at [http://localhost:3000](http://localhost:3000).
+## See it in action
 
-## Deploy to Vercel
+These screenshots use a demo meal and a test account.
 
-1. Import the GitHub repository into Vercel and leave **Root Directory** at the
-   repository root. The checked-in `vercel.json` runs the React build and routes
-   API requests to a Node.js function on the same domain.
-2. In the project's environment settings, add a Vercel-reachable `MONGODB_URI`
-   and a long random `JWT_SECRET`. For photo scans, add `GEMINI_API_KEY` or
-   `OPENAI_API_KEY`. Keep these values in Vercel's environment settings.
-3. Deploy and open the generated HTTPS URL. Register or sign in, then verify
-   photo scanning, the Food Library, and Meal History with a small test image.
-   If you enable Google sign-in, register the production callback described
-   below and redeploy after adding the OAuth credentials.
+### 1. Review a meal photo
 
-The Vercel deployment accepts original meal photos up to 4 MB, within
-[Vercel's function payload limit](https://vercel.com/docs/functions/limitations).
-The standalone server accepts photos up to 10 MB. A photo stored by a standalone
-server above the Vercel limit displays a placeholder when viewed through Vercel.
+Open **Food log** and take or upload a photo. Check the foods, portions, and nutrition estimates. You can also select **Try an example scan** to see the review screen.
 
-## Google sign-in
+![NutriScan meal review with a bowl photo, portions, and nutrition estimates](docs/screenshots/meal-scan-review.png)
 
-Choose **Continue with Google** on either the sign-in or registration screen.
-The first successful sign-in creates a NutriScan account. If the email already
-belongs to a password account, continue signing in with that password.
+### 2. Save and reuse a meal
 
-1. In Google Cloud, create an OAuth client of type **Web application**. If your
-   OAuth app is in testing mode, add the Google accounts that will test it.
-2. Add the exact callback URL to the client's **Authorized redirect URIs**.
-   For the local website, use `http://localhost:5000/api/auth/google/callback`.
-   For Android, use `https://YOUR-HOST/api/auth/google/callback` on your deployed
-   NutriScan server.
-3. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` in
-   the backend environment, then restart NutriScan. Keep the client secret in
-   the backend environment.
-4. Open the website on the same origin as the callback. For Android, connect the
-   app to the configured HTTPS server. The app opens the system browser for the
-   Google account selection and returns to NutriScan to finish signing in.
+Choose **Add to dashboard → Log & save to library** to keep the meal for later, or **Log meal only** to add it to your history. To reuse it, open **Food Library → Saved from photos**, search for the meal or an ingredient, then select it and confirm the portions.
 
-The Google button becomes available when the backend credentials are configured
-and the client is using the callback's origin. A development server reached over
-a private Wi-Fi IP and plain HTTP still supports email and password.
+![NutriScan Food Library showing a saved meal with its photo and calorie estimate](docs/screenshots/saved-foods.png)
 
-## Build and use Android
+### 3. Check your history
 
-Install JDK 17 and Android SDK Platform 34, then run from the repository root:
+Go to **Food log → Meal history** to check the original photo on the meal entry. The dashboard shows how the meal contributes to your daily totals.
 
-```powershell
-cd android
-.\gradlew.bat assembleDebug
-```
+## Install and run
 
-On macOS or Linux, use `./gradlew assembleDebug` from the same directory. The
-debug-signed APK is written to
-`android/app/build/outputs/apk/debug/app-debug.apk`.
+### Run the web app locally
 
-The Android app connects to `https://nutriscan-w116.onrender.com` by default.
-To choose another server, press Back from the first app screen and select
-**Change server**. For local testing, connect the phone and development machine
-to the same Wi-Fi and enter the computer's private address and port, such as
-`http://192.168.1.100:5000`. On the Android Emulator, use
-`http://10.0.2.2:5000`. Keep NutriScan running in production mode so the server
-can serve the built frontend. You can also set the initial server at build time
-with `-PnutriscanServer=https://YOUR-HOST`.
+1. Install Node.js 20 or later. Start MongoDB locally or have a MongoDB connection string ready.
+2. From the repository root, install the dependencies.
 
-## Meal logging and health profile
+   ```sh
+   npm ci
+   npm ci --prefix client
+   ```
 
-- **Photo log** estimates foods, portions, and nutrition from a meal photo.
-  Review the estimates or answer a short clarification before saving. **Try an
-  example scan** previews the workflow.
-- **Manual log** records foods and quantities through the food library.
-- **Dashboard** shows daily nutrition, recent meals, alerts, and a seven-day
-  calorie trend.
-- **Profile** stores height, weight, activity level, allergies, and health
-  conditions. The overview calculates BMI from saved measurements.
+3. Copy [`.env.example`](.env.example) to `.env`. Set `MONGODB_URI` and a long random `JWT_SECRET`. Set `NODE_ENV=production` and keep `PORT=5000` for the local address below. To enable photo analysis, set `GEMINI_API_KEY` or `OPENAI_API_KEY`. Keep secrets in the backend environment.
+4. Build and start the project.
 
-For live photo scans, set `GEMINI_API_KEY` or `OPENAI_API_KEY` on the backend
-and restart the server. If both are set, NutriScan uses Gemini. The optional
-`GEMINI_VISION_MODEL` and `OPENAI_VISION_MODEL` settings override the defaults.
-The selected provider receives a resized copy for analysis. When you log the
-reviewed meal, NutriScan stores the original photo bytes and the confirmed
-nutrition estimates. Choose **Log & save to library** to keep a reusable copy
-under **Food Library → Saved from photos**, or **Log meal only** to keep the
-photo and estimates in Meal History.
+   ```sh
+   npm run build
+   npm start
+   ```
 
-### Verify photo logging on web and Android
+5. Open [the local sign-in page](http://localhost:5000/login). Register or sign in, then go to **Food log**.
 
-1. Start MongoDB and the built website as described above, set a vision provider
-   key, and sign in on the website and the Android app against that server.
-2. In **Food log**, upload or take a photo. Review the results and choose
-   **Add to dashboard → Log & save to library**.
-3. Open **Food Library → Saved from photos**, search by meal or ingredient, and
-   select the entry. Check its photo and estimates, then log it again.
-4. Check **Food log → Meal history**. Both entries should show the selected
-   meal photo. Repeat with a different photo and **Log meal only**. Its
-   thumbnail should appear in history, and the saved food list should stay the same.
+### Use the Android app
 
-JPEG, PNG, WebP, and browser-readable HEIF images are supported.
-NutriScan keeps the source bytes in MongoDB, deduplicates identical photos per
-account, and serves them only to the signed-in owner. Library entries retain a
-snapshot of the reviewed estimates and remain available if the source meal is
-removed. Older entries without stored photos show a placeholder.
+1. Install the APK from **[PLACEHOLDER — Add APK download URL]**, or build a debug APK from the `android/` folder using JDK 17, Android SDK Platform 34, and the included Gradle wrapper.
+2. Connect the app to your NutriScan server. Press Back from the first screen and choose **Change server**, or set its initial server when building with `-PnutriscanServer=<SERVER_URL>`.
+3. For a local test on a physical phone, use your computer's Wi-Fi address and port. On the Android Emulator, use `http://10.0.2.2:5000`. Keep the local server running while you test.
 
-## Project layout
+### Hosting and sign-in
 
-- [`client/`](client/) contains the shared React interface.
-- [`server/`](server/) contains the Express API and Mongoose models.
-- [`api/`](api/) adapts the Express API for Vercel.
-- [`android/`](android/) contains the Android app and Gradle build.
-- [`.env.example`](.env.example) lists backend configuration variables.
+To deploy, import the repository into Vercel and keep the root directory at the repository root. The checked-in [Vercel configuration](vercel.json) builds the React app and routes API requests to Express. Add a reachable `MONGODB_URI`, a `JWT_SECRET`, and a photo analysis key to the Vercel project environment.
+
+Google sign-in is optional. Configure a Google OAuth **Web application** client and register the exact `/api/auth/google/callback` URL for the server your users open. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` on the backend. Use a reachable HTTPS server for Google sign-in on Android.
+
+## What I built it with
+
+- **React** for the interface and **Android WebView** for the Android app. Both use the same screens and backend.
+- **Node.js and Express** for the API and **MongoDB with Mongoose** for accounts, meals, photos, and saved foods.
+- **Gemini or OpenAI** for photo analysis, depending on the backend configuration.
+- **Gradle** for Android builds and **Vercel** for the web deployment configuration.
+
+## About me
+
+I'm **[PLACEHOLDER — Your name]**, the creator of NutriScan.
+
+[PLACEHOLDER — Add a sentence or two about yourself and what got you interested in building a nutrition app.]
