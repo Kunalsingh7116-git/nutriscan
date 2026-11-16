@@ -1,25 +1,22 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { randomUUID } = require('node:crypto');
 
 const UserSchema = new mongoose.Schema({
-  user_id: { type: String, unique: true },
+  user_id: { type: String, unique: true, default: () => randomUUID() },
   name: {
     first: { type: String, required: true },
     last: { type: String, required: true },
   },
   email: { type: String, required: true, unique: true, lowercase: true },
-  password: { type: String, required: true },
+  google_sub: { type: String, unique: true, sparse: true, select: false },
+  password: { type: String, required() { return !this.google_sub; } },
   phone_number: [String],
-  date_of_birth: { type: Date, required: true },
+  date_of_birth: { type: Date, required() { return !this.google_sub; } },
 }, { timestamps: true });
 
-// Auto-generate user_id
 UserSchema.pre('save', async function (next) {
-  if (!this.user_id) {
-    const count = await mongoose.model('User').countDocuments();
-    this.user_id = `U${String(count + 101).padStart(3, '0')}`;
-  }
-  if (this.isModified('password')) {
+  if (this.isModified('password') && this.password) {
     this.password = await bcrypt.hash(this.password, 10);
   }
   next();

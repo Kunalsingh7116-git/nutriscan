@@ -1,12 +1,13 @@
 {
   "name": "nutriscan",
   "version": "1.0.0",
-  "description": "NutriScan - Smart Nutritional Tracking System",
+  "description": "Photo-based meal logging, nutrition tracking, and a reusable food library for web and Android.",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon server/index.js",
     "client": "cd client && npm start",
     "build": "cd client && npm run build",
+    "build:vercel": "node scripts/build-vercel.js",
     "start": "node server/index.js",
     "install-all": "npm install && cd client && npm install"
   },

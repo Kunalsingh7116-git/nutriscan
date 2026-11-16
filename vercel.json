@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci && npm ci --prefix client",
+  "buildCommand": "npm run build:vercel",
+  "outputDirectory": "client/build",
+  "functions": {
+    "api/handler.js": { "maxDuration": 90 }
+  },
+  "rewrites": [
+    { "source": "/api/:path(.*)", "destination": "/api/handler?__nutriscan_path=:path" },
+    { "source": "/:page(login|register|auth|dashboard|food-products|log-food|alerts|profile)/:path*", "destination": "/index.html" }
+  ]
+}

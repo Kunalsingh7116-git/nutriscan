@@ -1,9 +1,12 @@
 node_modules/
 client/node_modules/
 .env
+.env.*
+!.env.example
 client/build/
 *.log
 .DS_Store
+.vercel/
 android/.gradle/
 android/**/build/
 android/local.properties

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import Brand from '../components/Brand';
+import GoogleSignIn from '../components/GoogleSignIn';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -47,6 +48,7 @@ export default function Login() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+        <GoogleSignIn disabled={loading} />
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
           No account? <Link to="/register" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 700 }}>Register</Link>
         </p>

@@ -15,6 +15,7 @@ const nutrients = ['calories', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sod
 const summary = [['calories', 'Calories', 'kcal'], ['protein', 'Protein', 'g'], ['carbs', 'Carbs', 'g'], ['fat', 'Fat', 'g']];
 const moreNutrition = [['fiber', 'Fiber', 'g'], ['sugar', 'Sugar', 'g'], ['sodium', 'Sodium', 'mg']];
 const acceptedPhotos = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
+const maxPhotoMb = Number(process.env.REACT_APP_MAX_MEAL_PHOTO_MB) || 10;
 
 function selectedItems(scan, answers, sizes, excluded) {
   return scan.foods.flatMap((food, index) => {
@@ -141,9 +142,9 @@ export default function PhotoLog() {
   async function scanFile(file) {
     if (!file) return;
     setError('');
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > maxPhotoMb * 1024 * 1024) {
       setStage('start');
-      setError('Choose a photo that is 10 MB or smaller.');
+      setError(`Choose a photo that is ${maxPhotoMb} MB or smaller.`);
       return;
     }
     setStage('preparing');

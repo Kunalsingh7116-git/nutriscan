@@ -143,6 +143,8 @@ select.form-input { cursor: pointer; }
 .auth-logo { text-align: center; margin-bottom: 25px; }
 .auth-logo h1 { font-size: 25px; margin-top: 17px; letter-spacing: -.04em; }
 .auth-logo p { color: var(--text-muted); font-size: 14px; margin-top: 5px; }
+.google-sign-in { display: grid; gap: 8px; margin-top: 16px; }
+.google-sign-in > p:not(.alert-box) { color: var(--text-muted); font-size: 13px; text-align: center; }
 .alert-box { padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: 12px; font-size: 14px; }
 .alert-error { background: #fcf0f0; border: 1px solid #f2d2d5; color: var(--danger); }
 .alert-success { background: #eaf4e7; color: var(--accent); }

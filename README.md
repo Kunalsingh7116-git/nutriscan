@@ -1,88 +1,113 @@
-<div align="center">
+# NutriScan
 
+NutriScan tracks nutrition on the web and Android. Analyze a meal photo, review
+its nutrition estimates, and log it. Save meals to your Food Library for reuse,
+and track daily totals, trends, and health profiles. Both clients use the same
+React interface, Express API, and MongoDB database.
+
+[Open NutriScan](https://nutriscan-six-theta.vercel.app/login).
+
+## Run the website locally
+
+Install Node.js 20 or later and run MongoDB locally, or use a MongoDB Atlas
+connection string. From the repository root, run:
+
+```sh
+npm ci
+npm ci --prefix client
 ```
-███╗   ██╗██╗   ██╗████████╗██████╗ ██╗███████╗ ██████╗ █████╗ ███╗   ██╗
-████╗  ██║██║   ██║╚══██╔══╝██╔══██╗██║██╔════╝██╔════╝██╔══██╗████╗  ██║
-██╔██╗ ██║██║   ██║   ██║   ██████╔╝██║███████╗██║     ███████║██╔██╗ ██║
-██║╚██╗██║██║   ██║   ██║   ██╔══██╗██║╚════██║██║     ██╔══██║██║╚██╗██║
-██║ ╚████║╚██████╔╝   ██║   ██║  ██║██║███████║╚██████╗██║  ██║██║ ╚████║
-╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝
+
+Copy [`.env.example`](.env.example) to `.env`. For a local MongoDB server, set
+`MONGODB_URI=mongodb://127.0.0.1:27017/NutriScanDB`. Set `JWT_SECRET` to a long
+random value and set `NODE_ENV=production` so Express serves the built website.
+Leave `PORT=5000` to use the URL below.
+
+```sh
+npm run build
+npm start
 ```
 
-### **SMART NUTRITIONAL TRACKING SYSTEM**
-*Know what you eat. Own your health.*
+Open [http://localhost:5000/login](http://localhost:5000/login). For frontend
+development with live reload, set `NODE_ENV=development` and use `npm run dev`.
+The React development server runs at [http://localhost:3000](http://localhost:3000).
 
-<br/>
+## Deploy to Vercel
 
-[![Live Demo](https://img.shields.io/badge/🌐_LIVE_DEMO-nutriscan--w116.onrender.com-00e5a0?style=for-the-badge&labelColor=0a0e0f)](https://nutriscan-w116.onrender.com/dashboard)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white&labelColor=0a0e0f)](https://mongodb.com)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white&labelColor=0a0e0f)](https://react.dev)
-[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=nodedotjs&logoColor=white&labelColor=0a0e0f)](https://nodejs.org)
-[![License](https://img.shields.io/badge/License-MIT-00b8d9?style=for-the-badge&labelColor=0a0e0f)](LICENSE)
+1. Import the GitHub repository into Vercel and leave **Root Directory** at the
+   repository root. The checked-in `vercel.json` runs the React build and routes
+   API requests to a Node.js function on the same domain.
+2. In the project's environment settings, add a Vercel-reachable `MONGODB_URI`
+   and a long random `JWT_SECRET`. For photo scans, add `GEMINI_API_KEY` or
+   `OPENAI_API_KEY`. Keep these values in Vercel's environment settings.
+3. Deploy and open the generated HTTPS URL. Register or sign in, then verify
+   photo scanning, the Food Library, and Meal History with a small test image.
+   If you enable Google sign-in, register the production callback described
+   below and redeploy after adding the OAuth credentials.
 
-<br/>
+The Vercel deployment accepts original meal photos up to 4 MB, within
+[Vercel's function payload limit](https://vercel.com/docs/functions/limitations).
+The standalone server accepts photos up to 10 MB. A photo stored by a standalone
+server above the Vercel limit displays a placeholder when viewed through Vercel.
 
-> Built because I was tired of not knowing what I was actually eating.
+## Google sign-in
 
-</div>
+Choose **Continue with Google** on either the sign-in or registration screen.
+The first successful sign-in creates a NutriScan account. If the email already
+belongs to a password account, continue signing in with that password.
 
----
+1. In Google Cloud, create an OAuth client of type **Web application**. If your
+   OAuth app is in testing mode, add the Google accounts that will test it.
+2. Add the exact callback URL to the client's **Authorized redirect URIs**.
+   For the local website, use `http://localhost:5000/api/auth/google/callback`.
+   For Android, use `https://YOUR-HOST/api/auth/google/callback` on your deployed
+   NutriScan server.
+3. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` in
+   the backend environment, then restart NutriScan. Keep the client secret in
+   the backend environment.
+4. Open the website on the same origin as the callback. For Android, connect the
+   app to the configured HTTPS server. The app opens the system browser for the
+   Google account selection and returns to NutriScan to finish signing in.
 
-<br/>
+The Google button becomes available when the backend credentials are configured
+and the client is using the callback's origin. A development server reached over
+a private Wi-Fi IP and plain HTTP still supports email and password.
 
-## 💡 WHY I BUILT THIS
+## Build and use Android
 
-I kept seeing people (including myself) eating packaged food with zero idea what's actually inside it. Sure, there's a nutrition label — but nobody reads it, and even if you do, you don't know if that sodium count is dangerous *for you specifically*.
-
-So I built **NutriScan** — a full-stack web app that lets you log what you eat, tracks your nutrients in real time, and fires an alert the moment you're approaching or exceeding safe daily limits. Personalized. Data-driven. Actually useful.
-
-<br/>
-
----
-
-## ⚡ FEATURES
-
-### Android
-
-The Android app opens NutriScan's mobile interface and uses the same server for
-sign-in, profile data, and meal scans. It connects to
-`https://nutriscan-w116.onrender.com` by default.
-
-To use your development server, start NutriScan in production mode so Express
-serves the frontend build. On an Android device connected to the same Wi-Fi,
-press Back from the first app screen, choose **Change server**, and enter your
-computer's private Wi-Fi address and server port, such as
-`http://192.168.1.100:5000`. The Android Emulator can use `http://10.0.2.2:5000`.
-Configure provider keys on the backend server you connect to.
-
-Build the installable development APK with JDK 17 and Android SDK 34:
+Install JDK 17 and Android SDK Platform 34, then run from the repository root:
 
 ```powershell
 cd android
 .\gradlew.bat assembleDebug
 ```
 
-The APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`.
-Pass `-PnutriscanServer=http://192.168.1.100:5000` to set a different initial
-server for a particular build.
+On macOS or Linux, use `./gradlew assembleDebug` from the same directory. The
+debug-signed APK is written to
+`android/app/build/outputs/apk/debug/app-debug.apk`.
 
-### Photo meal logging
+The Android app connects to `https://nutriscan-w116.onrender.com` by default.
+To choose another server, press Back from the first app screen and select
+**Change server**. For local testing, connect the phone and development machine
+to the same Wi-Fi and enter the computer's private address and port, such as
+`http://192.168.1.100:5000`. On the Android Emulator, use
+`http://10.0.2.2:5000`. Keep NutriScan running in production mode so the server
+can serve the built frontend. You can also set the initial server at build time
+with `-PnutriscanServer=https://YOUR-HOST`.
 
-Open **Food log** and take a photo or upload one. NutriScan estimates the foods,
-portions, and nutrition, asks a quick multiple-choice question when needed, and
-adds the reviewed meal to your daily totals. **Try an example scan** previews the
-flow without writing an entry.
+## Meal logging and health profile
 
-To enable real scans, set `GEMINI_API_KEY` or `OPENAI_API_KEY` in the root `.env`
-file and restart the server. If both keys are set, scans use Gemini.
-`GEMINI_VISION_MODEL` defaults to `gemini-3.1-flash-lite` and `OPENAI_VISION_MODEL`
-defaults to `gpt-4o-mini`.
+- **Photo log** estimates foods, portions, and nutrition from a meal photo.
+  Review the estimates or answer a short clarification before saving. **Try an
+  example scan** previews the workflow.
+- **Manual log** records foods and quantities through the food library.
+- **Dashboard** shows daily nutrition, recent meals, alerts, and a seven-day
+  calorie trend.
+- **Profile** stores height, weight, activity level, allergies, and health
+  conditions. The overview calculates BMI from saved measurements.
 
-Run `npm ci` and `npm ci --prefix client` from the repository root. Copy
-`.env.example` to `.env`, set `MONGODB_URI`, a random `JWT_SECRET`, and
-`NODE_ENV=production`. Run `npm run build` and `npm start`, then open
-[http://localhost:5000/login](http://localhost:5000/login).
-
+For live photo scans, set `GEMINI_API_KEY` or `OPENAI_API_KEY` on the backend
+and restart the server. If both are set, NutriScan uses Gemini. The optional
+`GEMINI_VISION_MODEL` and `OPENAI_VISION_MODEL` settings override the defaults.
 The selected provider receives a resized copy for analysis. When you log the
 reviewed meal, NutriScan stores the original photo bytes and the confirmed
 nutrition estimates. Choose **Log & save to library** to keep a reusable copy
@@ -101,166 +126,16 @@ photo and estimates in Meal History.
    meal photo. Repeat with a different photo and **Log meal only**. Its
    thumbnail should appear in history, and the saved food list should stay the same.
 
-JPEG, PNG, WebP, and browser-readable HEIF images up to 10 MB are supported.
+JPEG, PNG, WebP, and browser-readable HEIF images are supported.
 NutriScan keeps the source bytes in MongoDB, deduplicates identical photos per
 account, and serves them only to the signed-in owner. Library entries retain a
 snapshot of the reviewed estimates and remain available if the source meal is
 removed. Older entries without stored photos show a placeholder.
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                                                                       │
-│   LOG FOOD  ──►  AUTO-CALCULATE DAILY TOTALS  ──►  ALERT IF OVER   │
-│       │                      │                           │           │
-│       ▼                      ▼                           ▼           │
-│  CONSUMPTION DB         LIVE DASHBOARD            SMART WARNINGS    │
-│  (every meal,           (charts, progress          (High Sodium,    │
-│   quantity, time)        bars, weekly trends)       High Sugar...)  │
-│                                                                       │
-└─────────────────────────────────────────────────────────────────────┘
-```
+## Project layout
 
-| | Feature | Description |
-|-|---------|-------------|
-| 🔐 | **Auth** | Secure JWT-based login & registration |
-| 🧬 | **Health Profile** | Weight, height, BMI, lifestyle, allergies, medical conditions |
-| 🍱 | **Food Database** | Add any product with complete nutrition facts |
-| ✏️ | **Food Logging** | Log meals with quantity, date & time |
-| 📊 | **Dashboard** | Weekly calorie bar chart + real-time nutrient progress |
-| 🚨 | **Smart Alerts** | Auto-fires when you cross WHO daily intake limits |
-| 📱 | **Mobile-first** | Bottom nav bar on phones, sidebar on desktop |
-
-<br/>
-
----
-
-## 🛠️ TECH STACK
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                        NUTRISCAN STACK                        │
-├────────────────┬─────────────────────┬────────────────────────┤
-│   FRONTEND     │      BACKEND        │       DATABASE         │
-│                │                     │                        │
-│  React 18      │  Node.js            │  MongoDB Atlas         │
-│  React Router  │  Express.js         │  Mongoose ODM          │
-│  Recharts      │  JWT + bcryptjs     │  7 Collections         │
-│  Custom CSS    │  REST API           │  NoSQL Documents       │
-│  (zero UI lib) │                     │                        │
-├────────────────┴─────────────────────┴────────────────────────┤
-│                    DEPLOYED ON RENDER                          │
-└──────────────────────────────────────────────────────────────┘
-```
-
-No UI component libraries. Every pixel is custom CSS — because I wanted full control over how it looks and feels.
-
-<br/>
-
----
-
-## 🗄️ DATA MODEL
-
-**7 MongoDB collections** wired together with reference fields:
-
-```
-users ──────────────── health_profiles      (1 : 1)
-users ──────────────── consumption_records  (1 : N)
-users ──────────────── daily_intake         (1 : N)
-users ──────────────── alerts               (1 : N)
-food_products ──────── nutrition_details    (1 : 1)
-food_products ──────── consumption_records  (1 : N)
-```
-
-```js
-// When you log food, this happens automatically:
-async function updateDailyIntakeAndAlerts(userId, date) {
-  // 1. Sum up all consumption records for the day
-  // 2. Update daily_intake totals
-  // 3. Check against WHO limits
-  // 4. Auto-generate alerts for anything exceeded
-}
-```
-
-<br/>
-
----
-
-## 🚨 DAILY LIMITS (WHO Guidelines)
-
-```
-  CALORIES  ████████████████████  2000 kcal / day
-  SUGAR     ████████████████████    50 g / day
-  SODIUM    ████████████████████  2300 mg / day
-  FAT       ████████████████████    65 g / day
-  PROTEIN   ████████████████████    50 g / day
-```
-
-Cross any of these → alert fires instantly, shows you exactly how much over you are.
-
-<br/>
-
----
-
-## 📁 PROJECT STRUCTURE
-
-```
-nutriscan/
-│
-├── 📂 server/
-│   ├── 📄 index.js                    # Express + MongoDB bootstrap
-│   ├── 📂 middleware/
-│   │   └── 📄 auth.js                 # JWT guard
-│   ├── 📂 models/                     # 7 Mongoose schemas
-│   │   ├── 📄 User.js                 # age is a virtual derived field
-│   │   ├── 📄 HealthProfile.js        # BMI also virtual
-│   │   ├── 📄 FoodProduct.js
-│   │   ├── 📄 NutritionDetails.js
-│   │   ├── 📄 ConsumptionRecord.js
-│   │   ├── 📄 DailyIntake.js
-│   │   └── 📄 Alert.js
-│   └── 📂 routes/
-│       ├── 📄 auth.js
-│       ├── 📄 users.js
-│       ├── 📄 healthProfiles.js
-│       ├── 📄 foodProducts.js
-│       ├── 📄 nutrition.js
-│       ├── 📄 consumption.js          # ← core logic lives here
-│       ├── 📄 dailyIntake.js
-│       └── 📄 alerts.js
-│
-├── 📂 client/src/
-│   ├── 📂 context/AuthContext.js      # Global auth state (JWT)
-│   ├── 📂 utils/api.js                # Axios with auto token injection
-│   ├── 📂 components/Layout.js        # Sidebar + mobile bottom nav
-│   └── 📂 pages/
-│       ├── 📄 Dashboard.js            # Recharts + live nutrient bars
-│       ├── 📄 FoodProducts.js         # Search, filter, add products
-│       ├── 📄 LogFood.js              # Log meals + nutrition preview
-│       ├── 📄 Alerts.js               # Alert inbox with read/unread
-│       └── 📄 Profile.js              # Health stats + BMI card
-│
-├── 📄 .env.example
-├── 📄 .gitignore
-└── 📄 package.json                    # Monorepo: dev / build / start
-```
-
-<br/>
-
----
-
-## 📄 LICENSE
-
-MIT — do whatever you want with it.
-
-<br/>
-
----
-
-<div align="center">
-
-
-[![Live Demo](https://img.shields.io/badge/🚀_Try_It_Live-Click_Here-00e5a0?style=for-the-badge&labelColor=0a0e0f)](https://nutriscan-w116.onrender.com/dashboard)
-
-*if the server is slow, it's just waking up — render free tier 🙃*
-
-</div>
+- [`client/`](client/) contains the shared React interface.
+- [`server/`](server/) contains the Express API and Mongoose models.
+- [`api/`](api/) adapts the Express API for Vercel.
+- [`android/`](android/) contains the Android app and Gradle build.
+- [`.env.example`](.env.example) lists backend configuration variables.

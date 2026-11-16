@@ -4,7 +4,8 @@ const auth = require('../middleware/auth');
 const MealPhoto = require('../models/MealPhoto');
 
 const router = express.Router();
-const maxBytes = 10 * 1024 * 1024;
+const maxPhotoMb = process.env.VERCEL ? 4 : 10;
+const maxBytes = maxPhotoMb * 1024 * 1024;
 
 function imageType(bytes) {
   if (!Buffer.isBuffer(bytes) || bytes.length < 12) return null;
@@ -43,6 +44,9 @@ router.get('/:id', auth, async (req, res) => {
     const photo = await MealPhoto.findOne({ _id: req.params.id, user_id: req.user.userId });
     if (!photo) return res.sendStatus(404);
     res.set({ 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' });
+    if (photo.data.length > maxBytes) {
+      return res.status(413).json({ message: 'This photo exceeds the server’s download limit.' });
+    }
     res.type(photo.mime).send(Buffer.from(photo.data));
   } catch (error) {
     console.error('Could not read meal photo:', error.name);
@@ -51,7 +55,7 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 router.use((error, req, res, next) => {
-  if (error.type === 'entity.too.large') return res.status(413).json({ message: 'Choose a photo that is 10 MB or smaller.' });
+  if (error.type === 'entity.too.large') return res.status(413).json({ message: `Choose a photo that is ${maxPhotoMb} MB or smaller.` });
   next(error);
 });
 

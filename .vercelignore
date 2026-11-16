@@ -1,0 +1,11 @@
+.env
+.env.*
+.git
+.vercel
+node_modules
+client/node_modules
+client/build
+android
+*.apk
+*.jks
+*.keystore

@@ -1,0 +1,33 @@
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+
+const app = express();
+
+// Middleware
+app.use(cors({ origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:3000' }));
+app.use('/api/meal-scan', require('./routes/mealScan'));
+app.use('/api/meal-photos', require('./routes/mealPhotos'));
+app.use(express.json());
+
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/health-profiles', require('./routes/healthProfiles'));
+app.use('/api/food-products', require('./routes/foodProducts'));
+app.use('/api/saved-foods', require('./routes/savedFoods'));
+app.use('/api/nutrition', require('./routes/nutrition'));
+app.use('/api/consumption', require('./routes/consumption'));
+app.use('/api/daily-intake', require('./routes/dailyIntake'));
+app.use('/api/alerts', require('./routes/alerts'));
+
+// Serve React in production
+app.use('/api', (req, res) => res.status(404).json({ message: 'API route not found.' }));
+if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
+  app.use(express.static(path.join(__dirname, '../client/build')));
+  app.get('*', (req, res) =>
+    res.sendFile(path.join(__dirname, '../client/build/index.html'))
+  );
+}
+
+module.exports = app;
