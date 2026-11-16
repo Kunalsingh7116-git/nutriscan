@@ -40,7 +40,7 @@ export default function StoredMealPhoto({ id, className = '', alt = '' }) {
   }, [id]);
 
   return <span ref={container} className={`stored-meal-photo ${className}`}>
-    {source?.id === id
+    {source && source.id === id
       ? <img src={source.url} alt={alt} onError={() => setSource(null)} />
       : <Utensils size={18} aria-hidden="true" />}
   </span>;
