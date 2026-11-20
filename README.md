@@ -251,7 +251,7 @@ Ideas and fixes are welcome through [GitHub issues](https://github.com/Kunalsing
 
 ## 👨‍💻 About the author
 
-Built by **[Kunal Singh](https://github.com/Kunalsingh7116-git)**, an undergraduate at **NSUT**, as a personal open course project to make meal tracking easier to keep up with.
+Built by **[Kunal Singh](https://github.com/Kunalsingh7116-git)**, an undergraduate at **NSUT**, as a personal open source project to make meal tracking easier to keep up with.
 
 <div align="center">
 
