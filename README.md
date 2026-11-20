@@ -4,7 +4,7 @@ NutriScan
 
 [Live app](https://nutriscan-six-theta.vercel.app/) · [GitHub repository](https://github.com/Kunalsingh7116-git/nutriscan)
 
-**Android APK** · `NutriScan-1.1.apk` is available locally. A public APK download is pending.
+**📱 Android APK** · [Download NutriScan 1.1 from Google Drive](https://drive.google.com/file/d/13xwcfWZrq6rTIV_z3KvcvCPLviKbS0kw/view?usp=sharing). Open the link and select **Download** to get `NutriScan-1.1.apk`.
 
 ## The problem I'm solving
 
