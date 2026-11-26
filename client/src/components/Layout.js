@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, BookOpen, Camera, LayoutGrid, LogOut, UserRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +18,11 @@ export default function Layout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const activeTab = Math.max(0, navItems.findIndex(item => pathname === item.to || pathname.startsWith(item.to + '/')));
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
 
   useEffect(() => {
     const refreshAlerts = () => api.get('/alerts')
@@ -42,16 +47,19 @@ export default function Layout() {
               onClick={() => { logout(); navigate('/login'); }}><LogOut size={18} /></button>
           </div>
         </header>
-        <Outlet />
+        <div key={pathname} className="route-scene"><Outlet /></div>
       </main>
       <nav className="mobile-bottom-nav" aria-label="Main navigation">
-        {navItems.map(({ to, Icon, label }) => (
-          <NavLink key={to} to={to} className="mobile-nav-item">
-            <Icon size={19} aria-hidden="true" />
-            <span>{label}</span>
-            {to === '/alerts' && unreadCount > 0 && <span className="nav-count" aria-label={`${unreadCount} unread`}>{unreadCount}</span>}
-          </NavLink>
-        ))}
+        <div className="nav-track">
+          <span className="nav-active-indicator" style={{ '--active-tab': activeTab }} aria-hidden="true" />
+          {navItems.map(({ to, Icon, label }) => (
+            <NavLink key={to} to={to} className="mobile-nav-item">
+              <Icon size={19} aria-hidden="true" />
+              <span>{label}</span>
+              {to === '/alerts' && unreadCount > 0 && <span className="nav-count" aria-label={`${unreadCount} unread`}>{unreadCount}</span>}
+            </NavLink>
+          ))}
+        </div>
       </nav>
     </div>
   );

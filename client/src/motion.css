@@ -1,0 +1,81 @@
+:root {
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --motion-spring: cubic-bezier(.22, 1.12, .42, 1);
+}
+
+/* The navigation stays mounted while each route gets a short arrival. */
+.route-scene { min-width: 0; }
+.mobile-bottom-nav { display: block; }
+.nav-track { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; max-width: 700px; margin-inline: auto; isolation: isolate; }
+.nav-active-indicator { position: absolute; z-index: -1; inset: 0 auto 0 0; width: 20%; border-radius: 10px; background: #edf5ed; transform: translateX(calc(var(--active-tab, 0) * 100%)); pointer-events: none; }
+.mobile-nav-item.active { background: transparent; }
+.mobile-nav-item svg { flex: none; }
+.metric-track > div { width: 100%; transform-origin: left center; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .route-scene { animation: page-arrive 380ms var(--motion-ease); }
+  .nav-active-indicator { transition: transform 420ms var(--motion-spring); }
+  .mobile-nav-item { transition: color 180ms ease; }
+  .mobile-nav-item svg { transition: transform 320ms var(--motion-spring); }
+  .mobile-nav-item.active svg { transform: translateY(-1px); }
+  .btn, .icon-button, .scan-cta, .answer-options button, .health-alert-read,
+  .health-alerts-filters button { transition: transform 160ms var(--motion-ease), background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+  .btn:active:not(:disabled), .icon-button:active:not(:disabled), .scan-cta:active,
+  .answer-options button:active:not(:disabled), .health-alert-read:active:not(:disabled) { transform: scale(.97); }
+  .mobile-nav-item:active svg { transform: scale(.9); }
+  .metric-track > div { transition: transform 700ms var(--motion-ease); }
+  .review-food summary svg { transition: transform 220ms var(--motion-ease); }
+  .health-alerts-results { animation: panel-arrive 220ms var(--motion-ease); }
+  .photo-card > .photo-review, .photo-card > .upload-panel { animation: panel-arrive 320ms var(--motion-ease); }
+  .modal-overlay { animation: overlay-arrive 180ms ease; }
+  .modal { animation: panel-arrive 260ms var(--motion-ease); }
+  .save-notice, .alert-success { animation: panel-arrive 320ms var(--motion-ease); }
+
+  /* Native view timelines scrub the photograph with the user's scroll.
+     No wheel interception, animation loop, or React render per scroll frame. */
+  @supports (animation-timeline: view()) and (animation-range: entry 0% entry 100%) {
+    .scan-hero { view-timeline-name: --meal-showcase; view-timeline-axis: block; }
+    .scan-hero-art {
+      animation: meal-photo-zoom 1ms linear both;
+      animation-timeline: --meal-showcase;
+      animation-range: contain 0% exit 100%;
+      transform-origin: 65% center;
+    }
+    .dashboard .metric-card, .dashboard .insights-card,
+    .route-scene .card-grid > .card, .health-alerts-aside > section {
+      animation: card-reveal 1ms linear both;
+      animation-timeline: view(block);
+      animation-range: entry 0% entry 85%;
+    }
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .scan-cta:hover, .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 12px #1b483219; }
+  .icon-button:hover:not(:disabled) { background: #edf4ed; }
+  .answer-options button:hover { transform: translateX(2px); }
+}
+
+@keyframes page-arrive {
+  from { opacity: .35; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes panel-arrive {
+  from { opacity: .4; transform: translateY(7px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes overlay-arrive { from { opacity: 0; } to { opacity: 1; } }
+@keyframes meal-photo-zoom {
+  from { transform: scale(1.14) translateY(-4px); }
+  to { transform: scale(1) translateY(12px); }
+}
+@keyframes card-reveal {
+  from { opacity: .65; transform: translateY(18px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Keep content fully available when motion is disabled or unsupported. */
+@media (prefers-reduced-motion: reduce) {
+  .route-scene, .route-scene *, .mobile-bottom-nav * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .scan-hero-art, .mobile-nav-item svg { transform: none; }
+}

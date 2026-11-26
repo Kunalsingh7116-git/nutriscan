@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { dateKey, mealTime } from '../utils/mealDate';
 import api from '../utils/api';
 import StoredMealPhoto from '../components/StoredMealPhoto';
+import useReducedMotion from '../hooks/useReducedMotion';
 
 const metrics = [
   { key: 'calories', name: 'Calories', unit: 'kcal', goal: 2000, Icon: Flame, tint: 'tangerine' },
@@ -24,6 +25,7 @@ function daysEnding(date) {
 }
 
 export default function Dashboard() {
+  const reducedMotion = useReducedMotion();
   const { user } = useAuth();
   const { state } = useLocation();
   const today = dateKey();
@@ -106,7 +108,7 @@ export default function Dashboard() {
                 <div className="metric-value">{activeData ? number.format(value) : '–'} <span>{unit}</span></div>
                 <span className="metric-goal">of {number.format(goal)} {unit}</span>
                 <div className="metric-track" role="progressbar" aria-label={name + ' reference progress'} aria-valuenow={activeData ? progress : undefined}>
-                  <div style={{ width: `${progress}%` }} />
+                  <div style={{ transform: `scaleX(${progress / 100})` }} />
                 </div>
               </article>
             );
@@ -143,7 +145,8 @@ export default function Dashboard() {
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#52645b' }} />
                 <YAxis domain={[0, max => Math.max(max, 2000)]} tickCount={3} width={38} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#52645b' }} />
                 <Tooltip cursor={{ fill: '#edf5ef' }} formatter={value => [`${value} kcal`, 'Calories']} />
-                <Bar dataKey="calories" minPointSize={3} radius={[5, 5, 0, 0]}>
+                <Bar dataKey="calories" minPointSize={3} radius={[5, 5, 0, 0]}
+                  isAnimationActive={!reducedMotion} animationDuration={650} animationEasing="ease-out">
                   {week.map(day => <Cell key={day.date} fill={day.date === date ? '#28724e' : '#9bc2a7'} />)}
                 </Bar>
               </BarChart>

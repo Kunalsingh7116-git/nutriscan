@@ -127,7 +127,7 @@ export default function Alerts() {
                   ))}
                 </div><span className="health-alerts-sort">Newest first</span>
               </div>
-              <div className="health-alerts-results" aria-live="polite">
+              <div key={filter} className="health-alerts-results" aria-live="polite">
                 {filtered.length > 0 ? <ul className="health-alerts-list">
                   {filtered.map(alert => <AlertRow key={alert._id || alert.alert_id} alert={alert} onMarkRead={markRead}
                     busy={markingAll || pending.includes(alert.alert_id)} />)}
