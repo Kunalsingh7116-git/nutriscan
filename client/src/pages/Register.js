@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import Brand from '../components/Brand';
+import AuthExperience from '../components/AuthExperience';
 import GoogleSignIn from '../components/GoogleSignIn';
 
 export default function Register() {
@@ -27,13 +27,14 @@ export default function Register() {
   const f = (field, val) => setForm(p => ({ ...p, [field]: val }));
 
   return (
-    <div className="auth-container">
+    <AuthExperience>
       <div className="auth-card">
         <div className="auth-logo">
-          <Brand />
-          <h1>Create your account</h1>
+          <span className="auth-form-eyebrow">Start with a little clarity</span>
+          <h1 tabIndex={-1}>Make yourself at home.</h1>
+          <p>Create your NutriScan account.</p>
         </div>
-        {error && <div className="alert-box alert-error">{error}</div>}
+        {error && <div className="alert-box alert-error" role="alert">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div className="form-group">
@@ -65,11 +66,11 @@ export default function Register() {
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
-        <GoogleSignIn disabled={loading} />
-        <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          Have an account? <Link to="/login" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 700 }}>Sign In</Link>
+        <div className="auth-divider">or</div><GoogleSignIn disabled={loading} />
+        <p className="auth-switch">
+          Already have an account? <Link to="/login">Sign in</Link>
         </p>
       </div>
-    </div>
+    </AuthExperience>
   );
 }
