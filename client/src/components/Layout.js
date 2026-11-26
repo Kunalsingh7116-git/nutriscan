@@ -24,8 +24,12 @@ export default function Layout() {
       .then(({ data }) => setUnreadCount(data.filter(alert => alert.status === 'Unread').length))
       .catch(() => {});
     refreshAlerts();
+    window.addEventListener('nutriscan:alerts-updated', refreshAlerts);
     const interval = setInterval(refreshAlerts, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('nutriscan:alerts-updated', refreshAlerts);
+    };
   }, [pathname]);
 
   return (
