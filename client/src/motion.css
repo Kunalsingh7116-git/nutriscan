@@ -40,15 +40,17 @@
     .scan-hero { view-timeline-name: --meal-showcase; view-timeline-axis: block; }
     .scan-hero-art {
       animation: meal-photo-zoom 1ms linear both;
-      animation-timeline: --meal-showcase;
-      animation-range: contain 0% exit 100%;
+      /* CRA's CSS sorter moves newer longhands before the shorthand.
+         Preserve them when the reordered shorthand resets these properties. */
+      animation-timeline: --meal-showcase !important;
+      animation-range: contain 0% exit 100% !important;
       transform-origin: 65% center;
     }
     .dashboard .metric-card, .dashboard .insights-card,
     .route-scene .card-grid > .card, .health-alerts-aside > section {
       animation: card-reveal 1ms linear both;
-      animation-timeline: view(block);
-      animation-range: entry 0% entry 85%;
+      animation-timeline: view(block) !important;
+      animation-range: entry 0% entry 85% !important;
     }
   }
 }
