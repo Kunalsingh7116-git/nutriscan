@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
@@ -8,6 +8,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('ns_token'));
   const [loading, setLoading] = useState(true);
+  const [welcoming, setWelcoming] = useState(false);
+  const finishWelcome = useCallback(() => setWelcoming(false), []);
 
   useEffect(() => {
     if (token) {
@@ -26,6 +28,7 @@ export function AuthProvider({ children }) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${tok}`;
     setToken(tok);
     setUser(userData);
+    setWelcoming(true);
   };
 
   const logout = () => {
@@ -33,10 +36,11 @@ export function AuthProvider({ children }) {
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
+    setWelcoming(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading, setUser }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading, setUser, welcoming, finishWelcome }}>
       {children}
     </AuthContext.Provider>
   );

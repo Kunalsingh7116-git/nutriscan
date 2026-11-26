@@ -2,15 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import GoogleSignIn from '../components/GoogleSignIn';
+import Brand from '../components/Brand';
 import AuthExperience from '../components/AuthExperience';
-import { Eye, EyeOff } from 'lucide-react';
+import GoogleSignIn from '../components/GoogleSignIn';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -30,9 +29,9 @@ export default function Login() {
     <AuthExperience>
       <div className="auth-card">
         <div className="auth-logo">
-          <span className="auth-form-eyebrow">Your everyday, a little clearer</span>
-          <h1 tabIndex={-1}>Welcome back.</h1>
-          <p>Sign in to pick up where you left off.</p>
+          <Brand />
+          <h1 tabIndex={-1}>Welcome back</h1>
+          <p>Sign in to see your nutrition and log meals.</p>
         </div>
         {error && <div className="alert-box alert-error" role="alert">{error}</div>}
         <form onSubmit={handleSubmit}>
@@ -43,22 +42,16 @@ export default function Login() {
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="login-password">Password</label>
-            <div className="auth-password">
-            <input id="login-password" autoComplete="current-password" className="form-input" type={showPassword ? 'text' : 'password'} value={form.password}
+            <input id="login-password" autoComplete="current-password" className="form-input" type="password" value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })} placeholder="••••••••" required />
-              <button type="button" className="auth-password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'}
-                aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
           </div>
-          <button className="btn btn-primary auth-submit" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign in'}
+          <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-        <div className="auth-divider">or</div><GoogleSignIn disabled={loading} />
-        <p className="auth-switch">
-          New to NutriScan? <Link to="/register">Create an account</Link>
+        <GoogleSignIn disabled={loading} />
+        <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          No account? <Link to="/register" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 700 }}>Register</Link>
         </p>
       </div>
     </AuthExperience>

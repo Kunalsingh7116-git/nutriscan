@@ -10,6 +10,7 @@ import LogFood from './pages/LogFood';
 import PhotoLog from './pages/PhotoLog';
 import Alerts from './pages/Alerts';
 import Profile from './pages/Profile';
+import SessionWelcome from './components/SessionWelcome';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -27,6 +28,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <SessionWelcome>
         <Routes>
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/auth/google" element={<PublicRoute><Login /></PublicRoute>} />
@@ -41,6 +43,7 @@ export default function App() {
             <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>
+        </SessionWelcome>
       </BrowserRouter>
     </AuthProvider>
   );
