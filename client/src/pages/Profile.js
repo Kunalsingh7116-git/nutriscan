@@ -3,6 +3,7 @@ import { Activity, ArrowRight, Check, ChevronDown, HeartPulse, Pencil, Ruler, Sh
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import './Profile.css';
+import { useMotionPreference } from '../hooks/useReducedMotion';
 
 const lifestyles = [
   { value: 'Sedentary', label: 'Light' },
@@ -34,6 +35,7 @@ function toForm(profile) {
 }
 
 export default function Profile() {
+  const { preference, changePreference } = useMotionPreference();
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState(() => toForm());
@@ -190,6 +192,17 @@ export default function Profile() {
             </section>
           </div>}
         </>}
+
+      <section className="card motion-preference" aria-labelledby="appearance-title">
+        <div><h2 id="appearance-title">Appearance</h2><p>Choose how NutriScan moves on this device.</p></div>
+        <label><span>Motion</span>
+          <select className="form-input" value={preference} onChange={event => changePreference(event.target.value)}>
+            <option value="system">Follow device setting</option>
+            <option value="full">Full motion</option>
+            <option value="reduced">Reduced motion</option>
+          </select>
+        </label>
+      </section>
 
       <details className="card profile-references">
         <summary>Daily nutrition reference values <ChevronDown size={19} aria-hidden="true" /></summary>
