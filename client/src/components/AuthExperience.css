@@ -17,6 +17,7 @@
 .auth-experience .auth-card { width: 100%; max-width: none; padding: 0; background: none; border: 0; border-radius: 0; }
 .auth-experience .auth-logo { margin-bottom: 28px; text-align: left; }
 .auth-experience .auth-logo h1 { margin: 10px 0 10px; font: 800 clamp(27px, 3vw, 33px)/1.2 var(--heading); letter-spacing: -.045em; }
+.auth-experience .auth-logo h1:focus { outline: none; }
 .auth-experience .auth-logo p { margin-top: 0; max-width: 310px; font-size: 14px; line-height: 1.7; color: #6b776a; }
 .auth-form-eyebrow { display: block; margin-bottom: 13px; color: #7b866f; font-size: 11px; letter-spacing: .1em; font-weight: 700; text-transform: uppercase; }
 .auth-experience .form-group { margin-bottom: 18px; }
