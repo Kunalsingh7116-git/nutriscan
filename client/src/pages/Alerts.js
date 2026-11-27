@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
+import useReducedMotion from '../hooks/useReducedMotion';
+import NumberTicker from '../components/ui/NumberTicker';
 import { Activity, Bell, BellRing, CalendarDays, Check, CheckCheck, CircleAlert, Droplets, Flame, Leaf, ShieldCheck, Wheat } from 'lucide-react';
 import api from '../utils/api';
 import './Alerts.css';
@@ -42,6 +45,7 @@ function AlertRow({ alert, onMarkRead, busy }) {
 }
 
 export default function Alerts() {
+  const reduced = useReducedMotion();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -121,13 +125,21 @@ export default function Alerts() {
             <section className="health-alerts-inbox" aria-label="Nutrition notifications">
               <div className="health-alerts-toolbar">
                 <div className="health-alerts-filters" role="group" aria-label="Filter alerts">
-                  {[['All', alerts.length], ['Unread', unread.length], ['Read', readCount]].map(([label, count]) => (
+                  {[['All', alerts.length, Bell], ['Unread', unread.length, BellRing], ['Read', readCount, CheckCheck]].map(([label, count, Icon]) => (
                     <button key={label} type="button" aria-pressed={filter === label} className={filter === label ? 'is-active' : ''}
-                      onClick={() => setFilter(label)}>{label === 'All' ? 'All updates' : label}<span>{count}</span></button>
+                      aria-label={`${label === 'All' ? 'All updates' : label}, ${count}`}
+                      onClick={() => setFilter(label)}>
+                      {filter === label && <motion.span className="health-filter-indicator" layoutId="alert-filter-selection" aria-hidden="true"
+                        transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 430, damping: 34 }} />}
+                      <Icon size={16} aria-hidden="true" />{label === 'All' ? 'All updates' : label}
+                      <span className="health-filter-count" aria-hidden="true"><NumberTicker value={count} /></span>
+                    </button>
                   ))}
                 </div><span className="health-alerts-sort">Newest first</span>
               </div>
-              <div key={filter} className="health-alerts-results" aria-live="polite">
+              <motion.div key={filter} className="health-alerts-results" aria-live="polite"
+                initial={reduced ? false : { opacity: .65, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: reduced ? 0 : .24, ease: [.16, 1, .3, 1] }}>
                 {filtered.length > 0 ? <ul className="health-alerts-list">
                   {filtered.map(alert => <AlertRow key={alert._id || alert.alert_id} alert={alert} onMarkRead={markRead}
                     busy={markingAll || pending.includes(alert.alert_id)} />)}
@@ -137,7 +149,7 @@ export default function Alerts() {
                   <p>{filter === 'Unread' ? 'You’ve read all your latest nutrition updates.' : 'Keep logging your meals to see your nutrition updates here.'}</p>
                   {filter !== 'All' && <button type="button" className="text-button" onClick={() => setFilter('All')}>View all updates</button>}
                 </div>}
-              </div>
+              </motion.div>
               <footer className="health-alerts-inbox-footer"><ShieldCheck size={14} aria-hidden="true" />Based on your logged meals and daily reference values.</footer>
             </section>
             <aside className="health-alerts-aside" aria-label="Alerts overview">

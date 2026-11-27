@@ -104,3 +104,18 @@
   .health-alerts-context { display: none; }
   .health-alerts-inbox-footer { justify-content: flex-start; font-size: 10px; }
 }
+
+/* A single shared highlight keeps the filter change spatially clear. */
+.health-alerts-page .health-alerts-filters { display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:4px; padding:5px; border:1px solid #e1e9da; border-radius:15px; background:#f1f5eb; }
+.health-alerts-page .health-alerts-filters button { position:relative; isolation:isolate; justify-content:center; min-height:44px; gap:8px; padding:10px 13px; border-radius:11px; font-size:13px; color:#5c7150; background:transparent; transition:color 180ms ease,transform 150ms ease; }
+.health-alerts-page .health-alerts-filters button.is-active { color:#fff; background:transparent; box-shadow:none; }
+.health-alerts-page .health-alerts-filters button > .health-filter-indicator { position:absolute; z-index:-1; inset:0; padding:0; border-radius:11px; background:#285e40; box-shadow:0 3px 7px #21462b20; pointer-events:none; }
+.health-alerts-page .health-alerts-filters button > svg { flex:none; }
+.health-alerts-page .health-alerts-filters button > .health-filter-count { display:inline-flex; align-items:center; justify-content:center; min-width:23px; padding:2px 6px; border-radius:7px; color:#526a43; background:#e5eddc; font-size:11px; font-weight:700; transition:background-color 180ms,color 180ms; }
+.health-alerts-page .health-alerts-filters button.is-active > .health-filter-count { color:white; background:#ffffff26; }
+.health-alerts-page .health-filter-count span { display:inline; min-width:0; padding:0; border:0; border-radius:0; background:none; color:inherit; font:inherit; }
+.health-alerts-page .health-alerts-results { animation:none; }
+.health-alerts-page .health-alerts-filters button:focus-visible { outline:2px solid #608e49; outline-offset:3px; }
+@media(hover:hover) { .health-alerts-page .health-alerts-filters button:not(.is-active):hover { color:#285e40; background:#e6eedc; } }
+@media(max-width:650px) { .health-alerts-page .health-alerts-filters { width:100%; } .health-alerts-page .health-alerts-toolbar { display:block; padding:14px; } .health-alerts-page .health-alerts-sort { display:none; } .health-alerts-page .health-alerts-filters button { padding:9px 8px; gap:6px; font-size:12px; } }
+@media(max-width:360px) { .health-alerts-page .health-alerts-filters button { gap:4px; padding:8px 5px; font-size:11px; } .health-alerts-page .health-alerts-filters button > svg { width:14px; } .health-alerts-page .health-alerts-filters button > .health-filter-count { min-width:19px; padding:2px 4px; } }
