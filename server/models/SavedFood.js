@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { mealItemSchema } = require('./mealItem');
 
 const schema = new mongoose.Schema({
+  public_id: { type: String, unique: true, sparse: true },
   user_id: { type: String, required: true },
   source_record: { type: String, required: true, unique: true },
   title: { type: String, required: true },

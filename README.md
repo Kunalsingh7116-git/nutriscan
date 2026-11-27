@@ -13,7 +13,7 @@
 
 **[🚀 Open the live app](https://nutriscan-six-theta.vercel.app/)** · **[📷 Screenshot gallery](docs/screenshots/README.md)** · **[⚙️ Local setup](#run-locally)** · **[📱 Android setup](#build-for-android)**
 
-**[📥 Download Android APK v1.1](https://drive.google.com/file/d/13xwcfWZrq6rTIV_z3KvcvCPLviKbS0kw/view?usp=sharing)** — open Google Drive and select **Download** to get `NutriScan-1.1.apk`.
+**[📥 Download Android APK v1.3](https://drive.google.com/file/d/13xwcfWZrq6rTIV_z3KvcvCPLviKbS0kw/view?usp=sharing)** — open Google Drive and select **Download** to get `NutriScan-1.3.apk`.
 
 <img src="docs/screenshots/android-dashboard.png" width="235" alt="Android dashboard with the meal scanning shortcut and daily nutrition totals">
 <img src="docs/screenshots/android-meal-review.png" width="235" alt="Meal review showing a sandwich photo, calorie and macro estimates, and portion controls">
@@ -198,7 +198,7 @@ Open **[localhost:5000/login](http://localhost:5000/login)**. Express serves the
 
 ## 📱 Build for Android
 
-The Android app loads a hosted NutriScan server; it requires a reachable backend and database. The source currently declares app version **1.1**. A prebuilt **[NutriScan 1.1 APK](https://drive.google.com/file/d/13xwcfWZrq6rTIV_z3KvcvCPLviKbS0kw/view?usp=sharing)** is hosted on Google Drive; open the link and choose **Download**. To build from source, follow the steps below.
+The Android app loads a hosted NutriScan server; it requires a reachable backend and database. The source currently declares app version **1.3**. A prebuilt **[NutriScan 1.3 APK](https://drive.google.com/file/d/13xwcfWZrq6rTIV_z3KvcvCPLviKbS0kw/view?usp=sharing)** is hosted on Google Drive; open the link and choose **Download**. To build from source, follow the steps below.
 
 1. Install **JDK 17** and **Android SDK Platform 34**. Set up the Android SDK location for your environment.
 2. From the repository root, build a debug APK:
@@ -215,7 +215,7 @@ The Android app loads a hosted NutriScan server; it requires a reachable backend
    ```
 
 3. Install `android/app/build/outputs/apk/debug/app-debug.apk` on a phone or emulator.
-4. To change the server, press **Back** when there is no browser history and choose **Change server**. Use an HTTPS deployment, your computer's private Wi-Fi address such as `http://192.168.1.8:5000`, or `http://10.0.2.2:5000` from the Android Emulator.
+4. **Back** returns to the previous page when one exists, and closes the app directly at the first page. Release builds connect to the hosted HTTPS site. In debug builds, **Change server** lets you use your computer's private Wi-Fi address or `http://10.0.2.2:5000` from the Android Emulator.
 
 For local Android testing, use the single-origin production build described above so the same server serves both the web interface and API.
 

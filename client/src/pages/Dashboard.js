@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { CalendarDays, Camera, ChevronLeft, ChevronRight, CircleCheck, Droplet, Flame, Leaf, Utensils, Wheat, Zap } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { dateKey, mealTime } from '../utils/mealDate';
 import api from '../utils/api';
+import { getAll } from '../utils/paginatedApi';
 import StoredMealPhoto from '../components/StoredMealPhoto';
-import useReducedMotion from '../hooks/useReducedMotion';
 import NumberTicker from '../components/ui/NumberTicker';
 import ShimmerSkeleton from '../components/ui/ShimmerSkeleton';
+const WeeklyChart = lazy(() => import('../components/WeeklyChart'));
 
 const metrics = [
   { key: 'calories', name: 'Calories', unit: 'kcal', goal: 2000, Icon: Flame, tint: 'tangerine' },
@@ -27,23 +27,37 @@ function daysEnding(date) {
 }
 
 export default function Dashboard() {
-  const reducedMotion = useReducedMotion();
-  const { user } = useAuth();
+  const { user, workspaceCache } = useAuth();
   const { state } = useLocation();
   const today = dateKey();
   const [date, setDate] = useState(state?.loggedDate || today);
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(() => {
+    const cached = workspaceCache.current.get(date);
+    return cached && Date.now() - cached.time < 60000 ? cached.data : null;
+  });
+  const [refreshing, setRefreshing] = useState(true);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
+    const cached = workspaceCache.current.get(date);
+    if (cached && Date.now() - cached.time < 60000) setData(cached.data);
+    setRefreshing(true);
+    setError(false);
     const config = { signal: controller.signal };
-    Promise.all([api.get('/daily-intake', config), api.get('/consumption', { ...config, params: { date } })])
-      .then(([intake, meals]) => setData({ date, intake: intake.data, meals: meals.data }))
-      .catch(() => { if (!controller.signal.aborted) setError(true); });
+    Promise.all([api.get('/daily-intake', { ...config, params: { from: daysEnding(date)[0].date, to: date } }), getAll('/consumption', { ...config, params: { date } })])
+      .then(([intake, meals]) => {
+        if (controller.signal.aborted) return;
+        const next = { date, intake: intake.data, meals: meals.data };
+        workspaceCache.current.set(date, { data: next, time: Date.now() });
+        if (workspaceCache.current.size > 8) workspaceCache.current.delete(workspaceCache.current.keys().next().value);
+        setData(next);
+      })
+      .catch(() => { if (!controller.signal.aborted) setError(true); })
+      .finally(() => { if (!controller.signal.aborted) setRefreshing(false); });
     return () => controller.abort();
-  }, [date, attempt]);
+  }, [date, attempt, workspaceCache]);
 
   const selected = new Date(`${date}T12:00`);
   const dateLabel = date === today ? 'Today' : selected.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -71,7 +85,7 @@ export default function Dashboard() {
         <div>
           <span className="page-eyebrow">YOUR DAILY OVERVIEW</span>
           <h1>{greeting}{firstName ? `, ${firstName}` : ''}.</h1>
-          <p>Here’s your nutrition at a glance.</p>
+          <p>Here’s your nutrition at a glance.{activeData && refreshing && <span role="status"> Refreshing…</span>}</p>
         </div>
         <div className="day-picker" aria-label="Nutrition date">
           <button className="icon-button" type="button" onClick={() => moveDate(-1)} aria-label="Previous day"><ChevronLeft size={17} /></button>
@@ -149,18 +163,7 @@ export default function Dashboard() {
         <section className="card insights-card">
           <div className="section-heading"><div><h2>Calorie trend</h2><p>Daily intake over 7 days</p></div></div>
           <div className="weekly-chart" role="img" aria-label={activeData ? week.map(day => `${day.label} ${day.calories} kcal`).join(', ') : 'Calorie trend unavailable'}>
-            <ResponsiveContainer width="100%" height={153}>
-              <BarChart data={week} margin={{ top: 8, right: 5, left: 0, bottom: 0 }} barSize={17}>
-                <CartesianGrid vertical={false} stroke="#e9ede8" strokeDasharray="3 4" />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#52645b' }} />
-                <YAxis domain={[0, max => Math.max(max, 2000)]} tickCount={3} width={38} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#52645b' }} />
-                <Tooltip cursor={{ fill: '#edf5ef' }} formatter={value => [`${value} kcal`, 'Calories']} />
-                <Bar dataKey="calories" minPointSize={3} radius={[5, 5, 0, 0]}
-                  isAnimationActive={!reducedMotion} animationDuration={650} animationEasing="ease-out">
-                  {week.map(day => <Cell key={day.date} fill={day.date === date ? '#28724e' : '#9bc2a7'} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+<Suspense fallback={<ShimmerSkeleton className="weekly-chart" label="Loading calorie chart" />}><WeeklyChart week={week} date={date} /></Suspense>
           </div>
         </section>
       </div>

@@ -3,12 +3,13 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
+app.set('query parser', 'simple');
 
 // Middleware
-app.use(cors({ origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:3000' }));
+app.use(cors({ origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:3000', exposedHeaders: ['X-Next-Offset'] }));
 app.use('/api/meal-scan', require('./routes/mealScan'));
 app.use('/api/meal-photos', require('./routes/mealPhotos'));
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -29,5 +30,15 @@ if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
     res.sendFile(path.join(__dirname, '../client/build/index.html'))
   );
 }
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  if (error.status === 413) return res.status(413).json({ message: 'The request is too large.' });
+  if (error.status === 400 || error.status === 415) {
+    return res.status(error.status).json({ message: 'The request could not be read.' });
+  }
+  require('./security').event('request.failed');
+  return res.status(500).json({ message: 'Something went wrong. Try again.' });
+});
 
 module.exports = app;

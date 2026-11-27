@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Camera, ChevronRight, Search, X } from 'lucide-react';
 import StoredMealPhoto from './StoredMealPhoto';
-import api from '../utils/api';
+import { getAll } from '../utils/paginatedApi';
 import ShimmerSkeleton from './ui/ShimmerSkeleton';
 import './SavedFoods.css';
 
@@ -14,7 +14,7 @@ export default function SavedFoods() {
 
   useEffect(() => {
     const controller = new AbortController();
-    api.get('/saved-foods', { signal: controller.signal })
+    getAll('/saved-foods', { signal: controller.signal })
       .then(({ data }) => { if (!controller.signal.aborted) setFoods(data); })
       .catch(() => { if (!controller.signal.aborted) setError(true); });
     return () => controller.abort();

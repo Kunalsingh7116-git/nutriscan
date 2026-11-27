@@ -119,7 +119,9 @@ public class MainActivity extends Activity {
         });
 
         setContentView(webView);
-        String saved = getPreferences(MODE_PRIVATE).getString("server", BuildConfig.DEFAULT_SERVER);
+        String saved = BuildConfig.DEBUG
+            ? getPreferences(MODE_PRIVATE).getString("server", BuildConfig.DEFAULT_SERVER)
+            : BuildConfig.DEFAULT_SERVER;
         try {
             connect(parseOrigin(saved));
         } catch (URISyntaxException error) {
@@ -193,12 +195,14 @@ public class MainActivity extends Activity {
     private void showConnectionError() {
         if (showingError || isFinishing()) return;
         showingError = true;
-        AlertDialog dialog = new AlertDialog.Builder(this)
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
             .setTitle("Couldn’t open NutriScan")
-            .setMessage("Check your connection and make sure the NutriScan server is running.")
-            .setPositiveButton("Retry", (selected, which) -> connect(server))
-            .setNeutralButton("Change server", (selected, which) -> showServerSettings())
-            .create();
+            .setMessage("Check your connection and try again.")
+            .setPositiveButton("Retry", (selected, which) -> connect(server));
+        if (BuildConfig.DEBUG) {
+            builder.setNeutralButton("Change server", (selected, which) -> showServerSettings());
+        }
+        AlertDialog dialog = builder.create();
         dialog.setOnDismissListener(selected -> showingError = false);
         dialog.show();
     }
@@ -303,12 +307,7 @@ public class MainActivity extends Activity {
             webView.goBack();
             return;
         }
-        new AlertDialog.Builder(this)
-            .setTitle("NutriScan")
-            .setItems(new String[] { "Change server", "Close app" }, (dialog, selection) -> {
-                if (selection == 0) showServerSettings();
-                else finish();
-            }).show();
+        finish();
     }
 
     @Override

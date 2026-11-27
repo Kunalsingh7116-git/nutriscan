@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const schema = new mongoose.Schema({
+  public_id: { type: String, unique: true, sparse: true },
   user_id: { type: String, required: true },
   digest: { type: String, required: true },
   mime: { type: String, required: true },

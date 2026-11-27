@@ -11,6 +11,8 @@ export default function Register() {
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '', phone_number: '', date_of_birth: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [code, setCode] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -18,7 +20,12 @@ export default function Register() {
     e.preventDefault();
     setError(''); setLoading(true);
     try {
-      const r = await api.post('/auth/register', form);
+      if (!codeSent) {
+        await api.post('/auth/register/code', { email: form.email });
+        setCodeSent(true);
+        return;
+      }
+      const r = await api.post('/auth/register', { ...form, code });
       login(r.data.token, r.data.user);
       navigate('/dashboard');
     } catch (err) {
@@ -37,6 +44,7 @@ export default function Register() {
         </div>
         {error && <div className="alert-box alert-error" role="alert">{error}</div>}
         <form onSubmit={handleSubmit}>
+          {!codeSent ? <>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div className="form-group">
               <label className="form-label" htmlFor="register-first">First name</label>
@@ -53,7 +61,7 @@ export default function Register() {
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="register-password">Password</label>
-            <input id="register-password" autoComplete="new-password" className="form-input" type="password" value={form.password} onChange={e => f('password', e.target.value)} required minLength={6} />
+            <input id="register-password" autoComplete="new-password" className="form-input" type="password" value={form.password} onChange={e => f('password', e.target.value)} required minLength={12} />
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="register-phone">Phone number (optional)</label>
@@ -63,7 +71,17 @@ export default function Register() {
             <label className="form-label" htmlFor="register-dob">Date of birth</label>
             <input id="register-dob" autoComplete="bday" className="form-input" type="date" value={form.date_of_birth} onChange={e => f('date_of_birth', e.target.value)} required />
           </div>
-          <SmoothButton type="submit" loading={loading} className="btn btn-primary auth-submit">Create account</SmoothButton>
+          </> : <div className="form-group">
+            <p>If the address is eligible, a code will arrive at {form.email}.</p>
+            <label className="form-label" htmlFor="register-code">Verification code</label>
+            <input id="register-code" className="form-input" autoComplete="one-time-code" inputMode="numeric"
+              pattern="[0-9]{8}" maxLength={8} required value={code} onChange={e => setCode(e.target.value)} />
+            <button type="button" className="btn btn-outline" disabled={loading}
+              onClick={() => { setCodeSent(false); setCode(''); setError(''); }}>Change email or request a new code</button>
+          </div>}
+          <SmoothButton type="submit" loading={loading} className="btn btn-primary auth-submit">
+            {codeSent ? 'Create account' : 'Send verification code'}
+          </SmoothButton>
         </form>
         <GoogleSignIn disabled={loading} />
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.85rem', color: 'var(--text-muted)' }}>

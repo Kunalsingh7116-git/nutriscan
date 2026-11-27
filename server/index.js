@@ -2,6 +2,11 @@ require('dotenv').config();
 const app = require('./app');
 const connectDatabase = require('./database');
 
+if (!require('./security').signingKeyReady()) {
+  console.error('NutriScan requires a strong signing secret.');
+  process.exit(1);
+}
+
 const port = process.env.PORT || 5000;
 connectDatabase()
   .then(() => app.listen(port, () => console.log(`NutriScan is running on port ${port}`)))

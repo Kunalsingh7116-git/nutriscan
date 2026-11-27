@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
+import { getAll } from '../utils/paginatedApi';
 import SavedFoods from '../components/SavedFoods';
 import { PackageOpen, Plus, Search, Utensils, X } from 'lucide-react';
 import ShimmerSkeleton from '../components/ui/ShimmerSkeleton';
@@ -90,7 +91,7 @@ export default function FoodProducts() {
     setLoading(true);
     setLoadError(false);
     try {
-      const r = await api.get('/food-products');
+      const r = await getAll('/food-products');
       setProducts(r.data);
       setFiltered(r.data);
     } catch { setLoadError(true); } finally { setLoading(false); }
@@ -126,7 +127,7 @@ export default function FoodProducts() {
         <div className="library-empty"><PackageOpen size={34} aria-hidden="true" /><h2>{search || category ? 'No matching foods' : 'Make room for your favourites'}</h2><p>{search || category ? 'Try another search or category.' : 'Add a food product to keep its nutrition ready for your next meal.'}</p>{!search && !category && <button className="btn btn-outline" onClick={() => setShowModal(true)}><Plus size={16} />Add your first product</button>}</div>
       ) : (
         <div className="card-grid card-grid-3">
-          {filtered.map(p => <ProductCard key={p._id} product={p} />)}
+          {filtered.map(p => <ProductCard key={p.product_id} product={p} />)}
         </div>
       )}
 

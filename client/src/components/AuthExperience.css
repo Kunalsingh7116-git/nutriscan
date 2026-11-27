@@ -1,2 +1,5 @@
 /* Keep the original auth card styling from index.css. */
 .auth-experience-content h1:focus:not(:focus-visible) { outline: none; }
+.auth-shell { width: min(100%, 430px); }
+.auth-legal-links { display:flex; justify-content:center; flex-wrap:wrap; gap:10px 16px; margin-top:20px; }
+.auth-legal-links a { color:#4b6255; font-size:14px; text-decoration:underline; text-underline-offset:3px; }

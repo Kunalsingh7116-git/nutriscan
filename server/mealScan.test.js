@@ -2,6 +2,9 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+const User = require('./models/User');
+const { RevokedSession, RateBucket } = require('./security');
 const { parseMealScan } = require('./mealScanResult');
 
 const option = { label: 'One serving', name: 'Rice', grams: 150, calories: 195,
@@ -15,6 +18,15 @@ test('meal scan response recovery and failure handling', async t => {
   process.env.JWT_SECRET = 'meal-scan-test-secret';
   process.env.GEMINI_API_KEY = 'test-key';
   const nativeFetch = global.fetch;
+  t.mock.method(User, 'findOne', () => ({ select: () => ({ lean: async () => ({ sessionVersion: 0 }) }) }));
+  t.mock.method(RevokedSession, 'exists', async () => null);
+  t.mock.method(RateBucket, 'findOneAndUpdate', async () => ({ count: 1 }));
+  const ScanLease = mongoose.model('ScanLease');
+  t.mock.method(ScanLease, 'updateOne', async () => ({ acknowledged: true }));
+  t.mock.method(ScanLease, 'deleteOne', async () => ({ acknowledged: true }));
+  const photo = 'data:image/webp;base64,' + require('node:fs').readFileSync(
+    require('node:path').join(__dirname, '../client/src/assets/meal-bowl.webp')
+  ).toString('base64');
   const app = express();
   app.use('/scan', require('./routes/mealScan'));
   const server = app.listen(0, '127.0.0.1');
@@ -29,8 +41,8 @@ test('meal scan response recovery and failure handling', async t => {
   async function scan(queue, authorized = true) {
     responses = [...queue]; calls = 0;
     const response = await nativeFetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json',
-      ...(authorized ? { Authorization: 'Bearer ' + jwt.sign({ userId: 'test' }, process.env.JWT_SECRET) } : {}) },
-    body: JSON.stringify({ photo: 'data:image/jpeg;base64,AAAA' }) });
+      ...(authorized ? { Authorization: 'Bearer ' + jwt.sign({ userId: 'test' }, process.env.JWT_SECRET, { expiresIn: '15m' }) } : {}) },
+    body: JSON.stringify({ photo }) });
     return { status: response.status, body: await response.json() };
   }
   try {

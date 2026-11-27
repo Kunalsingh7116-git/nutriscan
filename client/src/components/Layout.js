@@ -30,17 +30,27 @@ export default function Layout() {
   }, [pathname]);
 
   useEffect(() => {
-    const refreshAlerts = () => api.get('/alerts')
-      .then(({ data }) => setUnreadCount(data.filter(alert => alert.status === 'Unread').length))
-      .catch(() => {});
+    let pending;
+    function refreshAlerts() {
+      if (document.hidden || pending) return;
+      const controller = new AbortController();
+      pending = controller;
+      api.get('/alerts/meta/unread', { signal: controller.signal })
+        .then(({ data }) => { if (!controller.signal.aborted) setUnreadCount(data.count ?? 0); })
+        .catch(() => {})
+        .finally(() => { if (pending === controller) pending = undefined; });
+    }
     refreshAlerts();
+    document.addEventListener('visibilitychange', refreshAlerts);
     window.addEventListener('nutriscan:alerts-updated', refreshAlerts);
     const interval = setInterval(refreshAlerts, 30000);
     return () => {
+      pending?.abort();
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', refreshAlerts);
       window.removeEventListener('nutriscan:alerts-updated', refreshAlerts);
     };
-  }, [pathname]);
+  }, []);
 
   return (
     <div className="app-layout">
@@ -74,7 +84,7 @@ export default function Layout() {
             <div className="workspace-actions"><Link className="icon-button" to="/alerts" aria-label={unreadCount ? `Alerts, ${unreadCount} unread` : 'Alerts'}><Bell size={19} /></Link>
               <span className="header-separator" />
               <button type="button" className="icon-button app-signout" aria-label="Sign out" title="Sign out"
-                onClick={() => { logout(); navigate('/login'); }}><LogOut size={18} /></button></div>
+                onClick={async () => { const ended = await logout(); navigate('/login', { replace: true, state: { logoutFailed: !ended } }); }}><LogOut size={18} /></button></div>
           </div>
         </header>
         <main id="page-content" tabIndex={-1} key={pathname} className="route-scene"><Suspense fallback={<RouteLoading />}><Outlet /></Suspense></main>

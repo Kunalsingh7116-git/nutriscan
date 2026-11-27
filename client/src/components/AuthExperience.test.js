@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { MotionProvider } from '../hooks/useReducedMotion';
 import AuthExperience from './AuthExperience';
 import Login from '../pages/Login';
+import Register from '../pages/Register';
 import api from '../utils/api';
 
 const mockLogin = jest.fn();
@@ -13,7 +14,7 @@ jest.mock('./GoogleSignIn', () => () => <button type="button">Continue with Goog
 
 let animations;
 beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); mockLogin.mockClear();
+  localStorage.clear(); sessionStorage.clear(); mockLogin.mockClear(); api.post.mockReset();
   window.matchMedia = () => ({ matches: true, addEventListener: jest.fn(), removeEventListener: jest.fn() });
   animations = [];
   Element.prototype.animate = jest.fn(() => {
@@ -43,4 +44,39 @@ test('the restored form submits the same credentials and completes sign-in', asy
   expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeVisible();
   expect(api.post).toHaveBeenCalledWith('/auth/login', { email: 'test@example.com', password: 'example-password' });
   expect(mockLogin).toHaveBeenCalledWith('test-token', user);
+});
+
+test('signup sends only email first and requires the emailed code to create an account', async () => {
+  const email = 'audit@example.test';
+  const user = { name: { first: 'Audit' } };
+  api.post.mockResolvedValueOnce({ status: 202 }).mockResolvedValueOnce({ data: { token: 'test-token', user } });
+  render(<MotionProvider><MemoryRouter initialEntries={['/register']}><Routes>
+    <Route path="/register" element={<Register />} /><Route path="/dashboard" element={<h1>Dashboard</h1>} />
+  </Routes></MemoryRouter></MotionProvider>);
+  const values = { 'First name': 'Audit', 'Last name': 'Example', Email: email, Password: 'synthetic-test-password', 'Date of birth': '1999-01-01' };
+  for (const [label, value] of Object.entries(values)) fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  fireEvent.click(screen.getByRole('button', { name: 'Send verification code' }));
+  const code = await screen.findByLabelText('Verification code');
+  expect(api.post).toHaveBeenNthCalledWith(1, '/auth/register/code', { email });
+  expect(mockLogin).not.toHaveBeenCalled();
+  fireEvent.change(code, { target: { value: '12345678' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+  expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  expect(api.post).toHaveBeenNthCalledWith(2, '/auth/register', expect.objectContaining({ email, code: '12345678' }));
+});
+
+test('password recovery sends a code before accepting a new password', async () => {
+  const email = 'audit@example.test';
+  api.post.mockResolvedValueOnce({ status: 202 }).mockResolvedValueOnce({ status: 204 });
+  render(<MotionProvider><MemoryRouter><Login /></MemoryRouter></MotionProvider>);
+  fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }));
+  fireEvent.change(screen.getByLabelText('Email'), { target: { value: email } });
+  fireEvent.click(screen.getByRole('button', { name: 'Send recovery code' }));
+  const code = await screen.findByLabelText('Verification code');
+  fireEvent.change(code, { target: { value: '12345678' } });
+  fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'synthetic-new-password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
+  expect(await screen.findByText('Your password was changed. Sign in with your new password.')).toBeVisible();
+  expect(api.post).toHaveBeenNthCalledWith(1, '/auth/password-reset/code', { email });
+  expect(api.post).toHaveBeenNthCalledWith(2, '/auth/password-reset', { email, password: 'synthetic-new-password', code: '12345678' });
 });
