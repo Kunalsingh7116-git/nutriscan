@@ -4,13 +4,14 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import SessionWelcome from './components/SessionWelcome';
-const Register = lazy(() => import('./pages/Register'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const FoodProducts = lazy(() => import('./pages/FoodProducts'));
-const LogFood = lazy(() => import('./pages/LogFood'));
-const PhotoLog = lazy(() => import('./pages/PhotoLog'));
-const Alerts = lazy(() => import('./pages/Alerts'));
-const Profile = lazy(() => import('./pages/Profile'));
+import { routeLoaders } from './utils/routeLoaders';
+const Register = lazy(routeLoaders.register);
+const Dashboard = lazy(routeLoaders.dashboard);
+const FoodProducts = lazy(routeLoaders.library);
+const LogFood = lazy(routeLoaders.manual);
+const PhotoLog = lazy(routeLoaders.photo);
+const Alerts = lazy(routeLoaders.alerts);
+const Profile = lazy(routeLoaders.profile);
 
 function SessionStatus() {
   const { authError, retryAuth } = useAuth();

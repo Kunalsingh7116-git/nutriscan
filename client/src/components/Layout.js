@@ -1,9 +1,13 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, BookOpen, Camera, ChevronRight, LayoutGrid, Leaf, LogOut, Plus, UserRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import Brand from './Brand';
+import RouteLoading from './RouteLoading';
+import { preloadRoute } from '../utils/routeLoaders';
+import useReducedMotion from '../hooks/useReducedMotion';
 
 const navItems = [
   { to: '/dashboard', Icon: LayoutGrid, label: 'Overview' },
@@ -15,6 +19,7 @@ const navItems = [
 
 export default function Layout() {
   const { logout, user } = useAuth();
+  const reduced = useReducedMotion();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -44,9 +49,14 @@ export default function Layout() {
         <Link className="brand-link sidebar-brand" to="/dashboard"><Brand /></Link>
         <span className="sidebar-label">YOUR NUTRITION SPACE</span>
         <nav className="sidebar-nav" aria-label="Desktop navigation">
-          {navItems.map(({ to, Icon, label }) => <NavLink key={to} to={to}>
+          {navItems.map(({ to, Icon, label }) => <NavLink key={to} to={to}
+            onPointerEnter={() => preloadRoute(to)} onFocus={() => preloadRoute(to)} onPointerDown={() => preloadRoute(to)}>
+            {({ isActive }) => <>
+            {isActive && <motion.span className="sidebar-active-indicator" layoutId="sidebar-selection" aria-hidden="true"
+              transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 440, damping: 38 }} />}
             <Icon size={19} aria-hidden="true" /><span>{label}</span>
             {to === '/alerts' && unreadCount > 0 && <span className="nav-count" aria-label={`${unreadCount} unread`}>{unreadCount}</span>}
+            </>}
           </NavLink>)}
         </nav>
         <div className="sidebar-note"><span className="sidebar-note-icon"><Leaf size={21} /></span>
@@ -67,13 +77,14 @@ export default function Layout() {
                 onClick={() => { logout(); navigate('/login'); }}><LogOut size={18} /></button></div>
           </div>
         </header>
-        <main id="page-content" key={pathname} className="route-scene"><Outlet /></main>
+        <main id="page-content" tabIndex={-1} key={pathname} className="route-scene"><Suspense fallback={<RouteLoading />}><Outlet /></Suspense></main>
       </div>
       <nav className="mobile-bottom-nav" aria-label="Main navigation">
         <div className="nav-track">
           <span className="nav-active-indicator" style={{ '--active-tab': activeTab }} aria-hidden="true" />
           {navItems.map(({ to, Icon, label }) => (
-            <NavLink key={to} to={to} className="mobile-nav-item">
+            <NavLink key={to} to={to} className="mobile-nav-item"
+              onPointerEnter={() => preloadRoute(to)} onFocus={() => preloadRoute(to)} onPointerDown={() => preloadRoute(to)}>
               <Icon size={19} aria-hidden="true" />
               <span>{label}</span>
               {to === '/alerts' && unreadCount > 0 && <span className="nav-count" aria-label={`${unreadCount} unread`}>{unreadCount}</span>}
