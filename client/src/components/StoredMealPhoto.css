@@ -12,12 +12,3 @@
 .stored-meal-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .stored-meal-photo.meal-photo { width: 100%; height: auto; min-height: 130px; }
 .stored-meal-photo.meal-photo img { min-height: 0; }
-.saved-foods { margin-bottom: 18px; }
-.saved-food-filter { display: grid; gap: 5px; font-size: 13px; color: var(--text-muted); font-weight: 700; }
-.saved-food-list { list-style: none; padding: 0; margin: 8px 0 0; }
-.saved-food-list li + li { border-top: 1px solid var(--border); }
-.saved-food-link { display: flex; align-items: center; gap: 10px; padding: 10px 2px; color: var(--text); text-decoration: none; border-radius: 6px; }
-.saved-food-link:hover { background: var(--surface2); }
-.saved-food-link > svg { flex: none; color: var(--accent); }
-.saved-food-link small { margin-top: 2px; }
-.saved-food-note { margin-top: 12px; color: var(--text-muted); font-size: 14px; }

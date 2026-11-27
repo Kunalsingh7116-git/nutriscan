@@ -142,10 +142,6 @@ select.form-input { padding-right:32px; appearance:none; background-image:url("d
 .library-search svg { position:absolute; left:14px; top:15px; color:#8a9b7b; }
 .library-search input { width:100%; padding-left:42px; }
 .library-toolbar select { width:auto; max-width:100%; }
-.saved-foods { margin-bottom:28px; background:linear-gradient(110deg,#f0f5e9,#fff 75%); }
-.saved-food-note { line-height:1.7; font-size:14px; padding:7px 0; color:#7d8d70; }
-.saved-food-link { background:#fff; padding:12px; border:1px solid #e6eddf; border-radius:13px; }
-.saved-food-link:hover { border-color:#bbcfab; }
 .product-card { padding:22px; }
 .product-card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
 .product-glyph { display:grid; place-items:center; width:42px; height:42px; border-radius:13px; background:#eff4e6; color:#7c955e; }
