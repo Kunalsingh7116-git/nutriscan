@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, CalendarDays, Camera, ChevronLeft, ChevronRight, CircleCheck, Droplet, Flame, Leaf, Utensils, Wheat, Zap } from 'lucide-react';
+import { CalendarDays, Camera, ChevronLeft, ChevronRight, CircleCheck, Droplet, Flame, Leaf, Utensils, Wheat, Zap } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { dateKey, mealTime } from '../utils/mealDate';
 import api from '../utils/api';
 import StoredMealPhoto from '../components/StoredMealPhoto';
 import useReducedMotion from '../hooks/useReducedMotion';
+import NumberTicker from '../components/ui/NumberTicker';
+import ShimmerSkeleton from '../components/ui/ShimmerSkeleton';
 
 const metrics = [
   { key: 'calories', name: 'Calories', unit: 'kcal', goal: 2000, Icon: Flame, tint: 'tangerine' },
@@ -67,6 +69,7 @@ export default function Dashboard() {
     <div className="page dashboard">
       <header className="overview-intro">
         <div>
+          <span className="page-eyebrow">YOUR DAILY OVERVIEW</span>
           <h1>{greeting}{firstName ? `, ${firstName}` : ''}.</h1>
           <p>Here’s your nutrition at a glance.</p>
         </div>
@@ -80,17 +83,24 @@ export default function Dashboard() {
       {state?.loggedDate && <div className="save-notice" role="status"><CircleCheck size={18} />
         {state.savedToLibrary ? 'Meal logged and saved to your Food Library.' : 'Meal added to your food log.'}
       </div>}
-      <section className="scan-hero" aria-labelledby="scan-hero-title">
+      <div className="overview-feature-grid"><section className="scan-hero" aria-labelledby="scan-hero-title">
         <div className="scan-hero-copy">
-          <div className="scan-kicker"><Camera size={15} aria-hidden="true" /> PHOTO LOGGING</div>
-          <h2 id="scan-hero-title">Snap it. Log it.</h2>
-          <p>Take a photo of your meal and get a quick estimate of what’s on your plate.</p>
-          <Link className="scan-cta" to="/log-food"><Camera size={19} aria-hidden="true" /> Scan a meal <ArrowRight size={17} aria-hidden="true" /></Link>
+          <div className="scan-kicker"><Camera size={15} aria-hidden="true" /> A PHOTO IS ALL IT TAKES</div>
+          <h2 id="scan-hero-title">Good food.<br />A clearer picture.</h2>
+          <p>Turn your next meal into a little more insight.</p>
+          <Link className="scan-cta" to="/log-food"><Camera size={18} aria-hidden="true" /> Scan a meal</Link>
         </div>
         <div className="scan-hero-art" aria-hidden="true">
           <div className="scan-frame"><i /><i /><i /><i /><span /></div>
         </div>
       </section>
+      <section className="daily-balance" aria-labelledby="daily-balance-title">
+        <div className="section-heading"><h2 id="daily-balance-title">Daily energy</h2><Flame size={19} aria-hidden="true" /></div>
+        <div className="energy-ring" style={{ '--energy-progress': `${Math.min(100, (intake?.total_calories || 0) / 2000 * 100)}%` }}>
+          <div>{activeData ? <strong><NumberTicker value={intake?.total_calories || 0} /></strong> : <ShimmerSkeleton className="energy-skeleton" label="Loading daily calories" />}<span>kcal logged</span></div>
+        </div><p>Daily reference <strong>2,000 kcal</strong></p>
+        <span className="energy-caption">{meals.length ? `${meals.length} ${meals.length === 1 ? 'meal' : 'meals'} in your food log` : 'Every meal adds to the picture'}</span>
+      </section></div>
 
       <section className="nutrition-section" aria-labelledby="nutrition-title" aria-busy={!activeData && !error}>
         <div className="section-heading">
@@ -105,7 +115,7 @@ export default function Dashboard() {
             return (
               <article className={`metric-card ${tint}`} key={key}>
                 <div className="metric-label"><span className="metric-icon"><Icon size={18} aria-hidden="true" /></span><h3>{name}</h3></div>
-                <div className="metric-value">{activeData ? number.format(value) : '–'} <span>{unit}</span></div>
+                <div className="metric-value">{activeData ? <NumberTicker value={value} /> : <ShimmerSkeleton className="metric-skeleton" label={`Loading ${name.toLowerCase()}`} />} <span>{unit}</span></div>
                 <span className="metric-goal">of {number.format(goal)} {unit}</span>
                 <div className="metric-track" role="progressbar" aria-label={name + ' reference progress'} aria-valuenow={activeData ? progress : undefined}>
                   <div style={{ transform: `scaleX(${progress / 100})` }} />
@@ -120,7 +130,7 @@ export default function Dashboard() {
         <section className="card insights-card">
           <div className="section-heading">
             <div><h2>{date === today ? 'Today’s meals' : 'Meals'}</h2><p>{activeData ? `${meals.length} ${meals.length === 1 ? 'entry' : 'entries'} logged` : 'Recent entries'}</p></div>
-            <Link className="inline-link" to="/log-food">Food log <ArrowRight size={15} aria-hidden="true" /></Link>
+            <Link className="inline-link" to="/log-food">View food log</Link>
           </div>
           {meals.length ? <ul className="meal-list">
             {meals.slice(0, 5).map(meal => (

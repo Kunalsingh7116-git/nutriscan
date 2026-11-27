@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import './motion.css';
 import App from './App';
+import './redesign.css';
 import { MotionProvider } from './hooks/useReducedMotion';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

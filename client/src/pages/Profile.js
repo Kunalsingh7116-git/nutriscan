@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Activity, ArrowRight, Check, ChevronDown, HeartPulse, Pencil, Ruler, Shield, UserRound, Weight } from 'lucide-react';
+import { Activity, Check, ChevronDown, HeartPulse, Pencil, Ruler, Shield, UserRound, Weight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import './Profile.css';
@@ -110,7 +110,7 @@ export default function Profile() {
 
   return (
     <div className="page profile-page">
-      <header className="profile-heading"><h1>Profile</h1><p>Manage your measurements and health details.</p></header>
+      <header className="profile-heading"><span className="page-eyebrow">MADE FOR YOU</span><h1>Your profile</h1><p>Manage your measurements and health details.</p></header>
       <section className="profile-identity" aria-label="Your account">
         <span className="profile-avatar" aria-hidden="true">
           {nameParts.length ? nameParts.map(part => part[0]).join('').toUpperCase() : <UserRound size={26} />}
@@ -175,7 +175,7 @@ export default function Profile() {
                 </div>)}
               </dl> : <div className="profile-empty">
                 <p>Add your height, weight, and activity level to see them here.</p>
-                <button type="button" className="btn btn-primary" ref={editButton} onClick={beginEdit}>Set up health profile <ArrowRight size={17} aria-hidden="true" /></button>
+                <button type="button" className="btn btn-primary" ref={editButton} onClick={beginEdit}>Set up health profile</button>
               </div>}
             </section>
             <section className="card profile-card" aria-labelledby="health-details-title">

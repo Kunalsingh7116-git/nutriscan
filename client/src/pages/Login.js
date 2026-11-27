@@ -5,6 +5,7 @@ import api from '../utils/api';
 import Brand from '../components/Brand';
 import AuthExperience from '../components/AuthExperience';
 import GoogleSignIn from '../components/GoogleSignIn';
+import SmoothButton from '../components/ui/SmoothButton';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -45,9 +46,7 @@ export default function Login() {
             <input id="login-password" autoComplete="current-password" className="form-input" type="password" value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })} placeholder="••••••••" required />
           </div>
-          <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
+          <SmoothButton type="submit" loading={loading} className="btn btn-primary auth-submit">Sign In</SmoothButton>
         </form>
         <GoogleSignIn disabled={loading} />
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.85rem', color: 'var(--text-muted)' }}>

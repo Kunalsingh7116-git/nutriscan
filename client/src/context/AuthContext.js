@@ -8,20 +8,37 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('ns_token'));
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const retryAuth = useCallback(() => setAttempt(value => value + 1), []);
   const [welcoming, setWelcoming] = useState(false);
   const finishWelcome = useCallback(() => setWelcoming(false), []);
 
   useEffect(() => {
+    const controller = new AbortController();
+    setAuthError(false);
     if (token) {
+      setLoading(true);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      axios.get('/api/users/me')
-        .then(r => setUser(r.data))
-        .catch(() => logout())
-        .finally(() => setLoading(false));
+      axios.get('/api/users/me', { timeout: 15000, signal: controller.signal })
+        .then(r => { if (!controller.signal.aborted) { setUser(r.data); setLoading(false); } })
+        .catch(error => {
+          if (controller.signal.aborted) return;
+          if (error.response?.status === 401) {
+            localStorage.removeItem('ns_token');
+            delete axios.defaults.headers.common['Authorization'];
+            setToken(null);
+            setUser(null);
+            setLoading(false);
+          } else {
+            setAuthError(true);
+          }
+        });
     } else {
       setLoading(false);
     }
-  }, [token]);
+    return () => controller.abort();
+  }, [token, attempt]);
 
   const login = (tok, userData) => {
     localStorage.setItem('ns_token', tok);
@@ -40,7 +57,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading, setUser, welcoming, finishWelcome }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading, authError, retryAuth, setUser, welcoming, finishWelcome }}>
       {children}
     </AuthContext.Provider>
   );

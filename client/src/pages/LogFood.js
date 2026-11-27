@@ -58,10 +58,10 @@ export default function LogFood() {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   return (
-    <div className="page">
+    <div className="page manual-page">
       <Link className="inline-link back-link" to="/log-food">Back to photo logging</Link>
       <div className="page-header">
-        <h2>Log from food library</h2>
+        <span className="page-eyebrow">THE EVERYDAY ESSENTIALS</span><h1>Log from food library</h1>
         <p>Choose a product and the number of servings.</p>
       </div>
 
@@ -74,28 +74,28 @@ export default function LogFood() {
             {error && <div className="alert-box alert-error">{error}</div>}
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label className="form-label">Food Product</label>
-                <select className="form-input" value={form.product_id} onChange={e => handleProductChange(e.target.value)} required>
+                <label className="form-label" htmlFor="manual-product">Food product</label>
+                <select id="manual-product" className="form-input" value={form.product_id} onChange={e => handleProductChange(e.target.value)} required>
                   <option value="">Select a product...</option>
                   {products.map(p => <option key={p._id} value={p.product_id}>{p.product_name} ({p.brand})</option>)}
                 </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+              <div className="manual-fields">
                 <div className="form-group">
-                  <label className="form-label">Quantity</label>
-                  <input className="form-input" type="number" min="0.5" step="0.5" value={form.quantity} onChange={e => f('quantity', e.target.value)} required />
+                  <label className="form-label" htmlFor="manual-quantity">Quantity</label>
+                  <input id="manual-quantity" className="form-input" type="number" min="0.5" step="0.5" value={form.quantity} onChange={e => f('quantity', e.target.value)} required />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Date</label>
-                  <input className="form-input" type="date" value={form.date} onChange={e => { f('date', e.target.value); fetchLogs(e.target.value); }} required />
+                  <label className="form-label" htmlFor="manual-date">Date</label>
+                  <input id="manual-date" className="form-input" type="date" value={form.date} onChange={e => { f('date', e.target.value); fetchLogs(e.target.value); }} required />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Time</label>
-                  <input className="form-input" type="time" value={form.time} onChange={e => f('time', e.target.value)} required />
+                  <label className="form-label" htmlFor="manual-time">Time</label>
+                  <input id="manual-time" className="form-input" type="time" value={form.time} onChange={e => f('time', e.target.value)} required />
                 </div>
               </div>
               <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={loading}>
-                {loading ? 'Logging...' : '✓ Log Food'}
+                {loading ? 'Logging...' : 'Log food'}
               </button>
             </form>
           </div>
@@ -106,11 +106,11 @@ export default function LogFood() {
               <h3 style={{ fontSize: '0.82rem', fontWeight: 800, marginBottom: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Nutrition Preview · ×{form.quantity}
               </h3>
-              {[['🔥 Calories', selected.nutrition.calories * form.quantity, 'kcal'],
-                ['🍬 Sugar', selected.nutrition.sugar * form.quantity, 'g'],
-                ['🧂 Sodium', selected.nutrition.sodium * form.quantity, 'mg'],
-                ['🧈 Fat', selected.nutrition.fat * form.quantity, 'g'],
-                ['💪 Protein', selected.nutrition.protein * form.quantity, 'g'],
+              {[['Calories', selected.nutrition.calories * form.quantity, 'kcal'],
+                ['Sugar', selected.nutrition.sugar * form.quantity, 'g'],
+                ['Sodium', selected.nutrition.sodium * form.quantity, 'mg'],
+                ['Fat', selected.nutrition.fat * form.quantity, 'g'],
+                ['Protein', selected.nutrition.protein * form.quantity, 'g'],
               ].map(([label, value, unit]) => (
                 <div key={label} className="nutrient-row">
                   <span style={{ fontSize: '0.85rem' }}>{label}</span>
@@ -127,7 +127,7 @@ export default function LogFood() {
             CONSUMPTION RECORDS · {form.date}
           </h3>
           {logs.length === 0 ? (
-            <div className="empty-state"><div className="empty-icon">📋</div><p>No food logged for this date</p></div>
+            <div className="empty-state"><p>No food logged for this date</p></div>
           ) : (
             <table className="table">
               <thead>

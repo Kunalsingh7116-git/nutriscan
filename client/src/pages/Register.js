@@ -5,6 +5,7 @@ import api from '../utils/api';
 import Brand from '../components/Brand';
 import AuthExperience from '../components/AuthExperience';
 import GoogleSignIn from '../components/GoogleSignIn';
+import SmoothButton from '../components/ui/SmoothButton';
 
 export default function Register() {
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '', phone_number: '', date_of_birth: '' });
@@ -62,9 +63,7 @@ export default function Register() {
             <label className="form-label" htmlFor="register-dob">Date of birth</label>
             <input id="register-dob" autoComplete="bday" className="form-input" type="date" value={form.date_of_birth} onChange={e => f('date_of_birth', e.target.value)} required />
           </div>
-          <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} disabled={loading}>
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
+          <SmoothButton type="submit" loading={loading} className="btn btn-primary auth-submit">Create account</SmoothButton>
         </form>
         <GoogleSignIn disabled={loading} />
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.85rem', color: 'var(--text-muted)' }}>

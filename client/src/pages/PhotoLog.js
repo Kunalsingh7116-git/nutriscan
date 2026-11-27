@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Camera, Check, ChevronDown, CircleHelp, ImagePlus, ScanLine, Trash2, Utensils } from 'lucide-react';
+import { ArrowLeft, Camera, Check, ChevronDown, CircleHelp, ImagePlus, ScanLine, Trash2, Utensils } from 'lucide-react';
 import MealCamera, { readMealPhoto } from '../components/MealCamera';
 import StoredMealPhoto from '../components/StoredMealPhoto';
 import examplePhoto from '../assets/meal-bowl.webp';
@@ -255,7 +255,7 @@ export default function PhotoLog() {
   return (
     <div className="page photo-page">
       <Link className="inline-link back-link" to="/dashboard"><ArrowLeft size={16} /> Overview</Link>
-      <header className="overview-intro"><div><h1>Food log</h1><p>Estimate and log a meal from a single photo.</p></div></header>
+      <header className="overview-intro"><div><span className="page-eyebrow">A LITTLE INSIGHT IN EVERY BITE</span><h1>Food log</h1><p>Estimate and log a meal from a single photo.</p></div></header>
       <input ref={uploadInput} type="file" accept={acceptedPhotos} onChange={chooseFile} hidden />
       <input ref={captureInput} type="file" accept="image/*" capture="environment" onChange={chooseFile} hidden />
       <div className="food-log-grid">
@@ -266,9 +266,9 @@ export default function PhotoLog() {
             <p>Get the whole plate in good light for a better estimate.</p>
             {error && <p className="alert-box alert-error" role="alert">{error}</p>}
             <div className="scan-actions">{photoActions}</div>
-            <Link className="inline-link" to="/food-products">Choose from Food Library <ArrowRight size={16} /></Link>
+            <Link className="inline-link" to="/food-products">Choose from Food Library</Link>
             <p className="photo-note">Meal photos are sent to the configured AI provider for analysis.</p>
-            <button type="button" className="text-button" onClick={showExample}>Try an example scan <ArrowRight size={14} /></button>
+            <button type="button" className="text-button" onClick={showExample}>Try an example scan</button>
           </div>}
 
           {stage === 'camera' && <MealCamera onCapture={scanFile} onClose={reset} onFallback={() => uploadInput.current.click()} />}
@@ -317,7 +317,7 @@ export default function PhotoLog() {
             <div className="review-label">{example ? 'Example scan' : 'Quick check'} · {scan.foods.slice(0, questionIndex + 1).filter(food => food.question).length} of {scan.foods.filter(food => food.question).length}</div>
             <h2 tabIndex={-1} ref={heading}>{foodQuestion.question}</h2>
             <div className="answer-options">
-              {foodQuestion.options.map((option, index) => <button type="button" key={index} onClick={() => chooseAnswer(questionIndex, index)}>{option.label} <ArrowRight size={16} /></button>)}
+              {foodQuestion.options.map((option, index) => <button type="button" key={index} onClick={() => chooseAnswer(questionIndex, index)}>{option.label}</button>)}
             </div>
             <button type="button" className="text-button" onClick={() => chooseAnswer(questionIndex, 0)}>Use the estimate</button>
           </div>}
@@ -381,7 +381,7 @@ export default function PhotoLog() {
               </li>)}
             </ul> : <div className="dashboard-empty"><span className="empty-glyph"><Utensils size={22} /></span><strong>{history ? 'No meals logged yet' : historyError ? 'History unavailable' : 'Loading meals…'}</strong></div>}
           </section>
-          <Link className="inline-link" to="/log-food/manual">Log from food library <ArrowRight size={16} /></Link>
+          <Link className="inline-link" to="/log-food/manual">Log from food library</Link>
         </aside>
       </div>
     </div>

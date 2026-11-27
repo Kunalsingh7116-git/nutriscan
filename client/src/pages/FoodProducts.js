@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
 import SavedFoods from '../components/SavedFoods';
+import { PackageOpen, Plus, Search, Utensils, X } from 'lucide-react';
+import ShimmerSkeleton from '../components/ui/ShimmerSkeleton';
+import SmoothButton from '../components/ui/SmoothButton';
 
 function AddProductModal({ onClose, onAdded }) {
+  const dialog = useRef(null);
+  useEffect(() => { dialog.current?.showModal(); }, []);
   const [form, setForm] = useState({ product_name: '', brand: '', category: '', barcode: '', serving_size: '', calories: '', sugar: '', sodium: '', fat: '', protein: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,65 +26,49 @@ function AddProductModal({ onClose, onAdded }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
+    <dialog ref={dialog} className="modal-overlay product-dialog" onCancel={onClose} onClick={e => e.target === e.currentTarget && onClose()}>
+      <section className="modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
         <div className="modal-header">
-          <span className="modal-title">Add Food Product</span>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <h2 id="product-modal-title" className="modal-title">Add a food product</h2>
+          <button className="modal-close" type="button" aria-label="Close add product" onClick={onClose}><X size={18} /></button>
         </div>
         {error && <div className="alert-box alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {[['product_name', 'Product Name', 'Maggi Noodles'], ['brand', 'Brand', 'Nestle'], ['category', 'Category', 'Snacks'], ['barcode', 'Barcode', '12345'], ['serving_size', 'Serving Size', '70g']].map(([k, l, ph]) => (
               <div className="form-group" key={k} style={k === 'product_name' ? { gridColumn: '1/-1' } : {}}>
-                <label className="form-label">{l}</label>
-                <input className="form-input" value={form[k]} onChange={e => f(k, e.target.value)} placeholder={ph} required={k !== 'barcode'} />
+                <label className="form-label" htmlFor={`product-${k}`}>{l}</label>
+                <input id={`product-${k}`} className="form-input" value={form[k]} onChange={e => f(k, e.target.value)} placeholder={ph} required={k !== 'barcode'} />
               </div>
             ))}
           </div>
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 4 }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 12, fontFamily: 'Space Mono', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Nutrition Facts (per serving)</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
+            <p className="page-eyebrow">NUTRITION PER SERVING</p>
+            <div className="product-nutrition-fields">
               {[['calories', 'Cal (kcal)'], ['sugar', 'Sugar (g)'], ['sodium', 'Sodium (mg)'], ['fat', 'Fat (g)'], ['protein', 'Protein (g)']].map(([k, l]) => (
                 <div className="form-group" key={k}>
-                  <label className="form-label">{l}</label>
-                  <input className="form-input" type="number" min="0" value={form[k]} onChange={e => f(k, e.target.value)} placeholder="0" required />
+                  <label className="form-label" htmlFor={`product-${k}`}>{l}</label>
+                  <input id={`product-${k}`} className="form-input" type="number" min="0" value={form[k]} onChange={e => f(k, e.target.value)} placeholder="0" required />
                 </div>
               ))}
             </div>
           </div>
-          <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} disabled={loading}>
-            {loading ? 'Adding...' : 'Add Product'}
-          </button>
+          <SmoothButton type="submit" className="btn btn-primary auth-submit" loading={loading}>Add product</SmoothButton>
         </form>
-      </div>
-    </div>
+      </section>
+    </dialog>
   );
 }
 
 function ProductCard({ product }) {
   const n = product.nutrition;
-  return (
-    <div className="card" style={{ position: 'relative' }}>
-      <div className="flex-between" style={{ marginBottom: 8 }}>
-        <span className="tag tag-blue">{product.category}</span>
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'Space Mono' }}>{product.product_id}</span>
-      </div>
-      <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: 2 }}>{product.product_name}</h3>
-      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 12 }}>{product.brand} · {product.serving_size}</p>
-      {n && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-          {[['🔥', n.calories, 'kcal'], ['🍬', n.sugar, 'g sugar'], ['🧂', n.sodium, 'mg Na'], ['🧈', n.fat, 'g fat'], ['💪', n.protein, 'g prot']].map(([icon, val, lbl]) => (
-            <div key={lbl} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{icon}</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 800, fontFamily: 'Space Mono', color: 'var(--accent)' }}>{val}</div>
-              <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontFamily: 'Space Mono' }}>{lbl}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return <article className="card product-card">
+    <div className="product-card-top"><span className="product-glyph"><Utensils size={21} aria-hidden="true" /></span><span className="tag tag-blue">{product.category}</span></div>
+    <h2>{product.product_name}</h2><p>{product.brand} · {product.serving_size}</p>
+    {n && <><div className="product-calories"><strong>{n.calories}</strong><span>kcal / serving</span></div>
+      <dl className="product-macros">{[['Protein', n.protein, 'g'], ['Fat', n.fat, 'g'], ['Sugar', n.sugar, 'g'], ['Sodium', n.sodium, 'mg']].map(([label, value, unit]) =>
+        <div key={label}><dt>{label}</dt><dd>{value} {unit}</dd></div>)}</dl></>}
+  </article>;
 }
 
 export default function FoodProducts() {
@@ -90,6 +79,7 @@ export default function FoodProducts() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -98,11 +88,12 @@ export default function FoodProducts() {
 
   const fetchProducts = async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const r = await api.get('/food-products');
       setProducts(r.data);
       setFiltered(r.data);
-    } finally { setLoading(false); }
+    } catch { setLoadError(true); } finally { setLoading(false); }
   };
 
   useEffect(() => {
@@ -113,27 +104,26 @@ export default function FoodProducts() {
   }, [search, category, products]);
 
   return (
-    <div className="page">
+    <div className="page library-page">
       <div className="page-header flex-between">
         <div>
-          <h2>Food Library</h2>
+          <span className="page-eyebrow">YOUR PERSONAL PANTRY</span><h1>Food library</h1><p>Good finds, saved meals, and everyday favourites.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Add Product</button>
+        <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={17} aria-hidden="true" />Add product</button>
       </div>
 
       <SavedFoods />
       <div className="section-heading"><div><h2>Food products</h2><p>{products.length} products</p></div></div>
-      <div className="card mb-16" style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 16px' }}>
-        <input className="form-input" style={{ flex: 1, margin: 0 }} placeholder="Search products or brands..." value={search} onChange={e => setSearch(e.target.value)} />
-        <select className="form-input" style={{ width: 'auto', margin: 0 }} value={category} onChange={e => setCategory(e.target.value)}>
-          <option value="">All Categories</option>
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+      <div className="library-toolbar">
+        <label className="library-search"><Search size={18} aria-hidden="true" /><input className="form-input" type="search" aria-label="Search products or brands" placeholder="Search products or brands…" value={search} onChange={e => setSearch(e.target.value)} /></label>
+        <select className="form-input" aria-label="Product category" value={category} onChange={e => setCategory(e.target.value)}>
+          <option value="">All categories</option>{categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         {(search || category) && <button className="btn btn-outline btn-sm" onClick={() => { setSearch(''); setCategory(''); }}>Clear</button>}
       </div>
 
-      {loading ? <div className="loading"><div className="spinner" />Loading products...</div> : filtered.length === 0 ? (
-        <div className="empty-state"><div className="empty-icon">🍱</div><p>No products found. Add one!</p></div>
+      {loading ? <div className="card-grid card-grid-3">{[0,1,2].map(item => <ShimmerSkeleton key={item} className="product-skeleton" label="Loading food products" />)}</div> : loadError ? <div className="library-empty" role="alert"><PackageOpen size={32} /><h2>Your pantry couldn’t load</h2><button className="btn btn-outline" onClick={fetchProducts}>Try again</button></div> : filtered.length === 0 ? (
+        <div className="library-empty"><PackageOpen size={34} aria-hidden="true" /><h2>{search || category ? 'No matching foods' : 'Make room for your favourites'}</h2><p>{search || category ? 'Try another search or category.' : 'Add a food product to keep its nutrition ready for your next meal.'}</p>{!search && !category && <button className="btn btn-outline" onClick={() => setShowModal(true)}><Plus size={16} />Add your first product</button>}</div>
       ) : (
         <div className="card-grid card-grid-3">
           {filtered.map(p => <ProductCard key={p._id} product={p} />)}

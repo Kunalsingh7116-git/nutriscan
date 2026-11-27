@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, BookOpen, Camera, LayoutGrid, LogOut, UserRound } from 'lucide-react';
+import { Bell, BookOpen, Camera, ChevronRight, LayoutGrid, Leaf, LogOut, Plus, UserRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import Brand from './Brand';
@@ -14,7 +14,7 @@ const navItems = [
 ];
 
 export default function Layout() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -39,16 +39,36 @@ export default function Layout() {
 
   return (
     <div className="app-layout">
-      <main className="main-content">
+      <a className="skip-content" href="#page-content">Skip to content</a>
+      <aside className="desktop-sidebar" aria-label="Workspace">
+        <Link className="brand-link sidebar-brand" to="/dashboard"><Brand /></Link>
+        <span className="sidebar-label">YOUR NUTRITION SPACE</span>
+        <nav className="sidebar-nav" aria-label="Desktop navigation">
+          {navItems.map(({ to, Icon, label }) => <NavLink key={to} to={to}>
+            <Icon size={19} aria-hidden="true" /><span>{label}</span>
+            {to === '/alerts' && unreadCount > 0 && <span className="nav-count" aria-label={`${unreadCount} unread`}>{unreadCount}</span>}
+          </NavLink>)}
+        </nav>
+        <div className="sidebar-note"><span className="sidebar-note-icon"><Leaf size={21} /></span>
+          <h2>A little more mindful.</h2><p>One meal at a time. Keep your food story in one place.</p>
+          <Link className="btn btn-primary" to="/log-food"><Plus size={16} aria-hidden="true" />Log a meal</Link>
+        </div>
+        <Link className="sidebar-account" to="/profile"><span className="account-avatar">{user?.name?.first?.[0] || 'N'}</span>
+          <span><strong>{user?.name?.first || 'My account'}</strong><small>Personal workspace</small></span><ChevronRight size={15} aria-hidden="true" /></Link>
+      </aside>
+      <div className="main-content">
         <header className="workspace-header">
           <div className="app-bar">
             <Link className="brand-link" to="/dashboard"><Brand /></Link>
-            <button type="button" className="icon-button app-signout" aria-label="Sign out" title="Sign out"
-              onClick={() => { logout(); navigate('/login'); }}><LogOut size={18} /></button>
+            <div className="workspace-breadcrumb"><span>My workspace</span><ChevronRight size={14} aria-hidden="true" /><strong>{navItems[activeTab].label}</strong></div>
+            <div className="workspace-actions"><Link className="icon-button" to="/alerts" aria-label={unreadCount ? `Alerts, ${unreadCount} unread` : 'Alerts'}><Bell size={19} /></Link>
+              <span className="header-separator" />
+              <button type="button" className="icon-button app-signout" aria-label="Sign out" title="Sign out"
+                onClick={() => { logout(); navigate('/login'); }}><LogOut size={18} /></button></div>
           </div>
         </header>
-        <div key={pathname} className="route-scene"><Outlet /></div>
-      </main>
+        <main id="page-content" key={pathname} className="route-scene"><Outlet /></main>
+      </div>
       <nav className="mobile-bottom-nav" aria-label="Main navigation">
         <div className="nav-track">
           <span className="nav-active-indicator" style={{ '--active-tab': activeTab }} aria-hidden="true" />
