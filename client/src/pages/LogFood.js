@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
+import { getAll } from '../utils/paginatedApi';
 import { dateKey, timeKey } from '../utils/mealDate';
 
 export default function LogFood() {
@@ -16,17 +17,13 @@ export default function LogFood() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    api.get('/food-products').then(r => setProducts(r.data)).catch(() => {});
+    getAll('/food-products').then(r => setProducts(r.data)).catch(() => {});
     fetchLogs(today);
   }, [today]);
 
   const fetchLogs = async (date) => {
-    const r = await api.get(`/consumption?date=${date}`);
-    const enriched = await Promise.all(r.data.filter(log => log.product_id).map(async (log) => {
-      const p = await api.get(`/food-products/${log.product_id}`).catch(() => null);
-      return { ...log, product: p?.data };
-    }));
-    setLogs(enriched);
+    const { data } = await getAll('/consumption', { params: { date } });
+    setLogs(data.filter(log => log.product_id));
   };
 
   const handleProductChange = (pid) => {
@@ -77,7 +74,7 @@ export default function LogFood() {
                 <label className="form-label" htmlFor="manual-product">Food product</label>
                 <select id="manual-product" className="form-input" value={form.product_id} onChange={e => handleProductChange(e.target.value)} required>
                   <option value="">Select a product...</option>
-                  {products.map(p => <option key={p._id} value={p.product_id}>{p.product_name} ({p.brand})</option>)}
+                  {products.map(p => <option key={p.product_id} value={p.product_id}>{p.product_name} ({p.brand})</option>)}
                 </select>
               </div>
               <div className="manual-fields">
@@ -143,12 +140,12 @@ export default function LogFood() {
               <tbody>
                 {logs.map(log => (
                   <tr key={log._id}>
-                    <td style={{ color: 'var(--text)', fontWeight: 600 }}>{log.product?.product_name || log.product_id}</td>
-                    <td>{log.product?.brand || '—'}</td>
+                    <td style={{ color: 'var(--text)', fontWeight: 600 }}>{log.display_name || log.product_id}</td>
+                    <td>{log.product_brand || '—'}</td>
                     <td><span className="tag tag-blue">×{log.quantity}</span></td>
                     <td style={{ fontFamily: 'Space Mono', fontSize: '0.8rem' }}>{log.time}</td>
                     <td style={{ color: 'var(--accent)', fontFamily: 'Space Mono' }}>
-                      {log.product?.nutrition ? Math.round(log.product.nutrition.calories * log.quantity) : '—'}
+                      {log.nutrients ? Math.round(log.nutrients.calories) : '—'}
                     </td>
                     <td>
                       <button className="btn btn-danger btn-sm" onClick={() => handleDelete(log.record_id, log.date)}>✕</button>

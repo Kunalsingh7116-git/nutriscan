@@ -61,7 +61,7 @@ body { font-size:16px; -webkit-font-smoothing:antialiased; }
 .daily-balance .section-heading svg { color:#8b9e73; }
 .energy-ring { width:152px; height:152px; margin:auto; display:grid; place-items:center; border-radius:50%; background:conic-gradient(#779b56 var(--energy-progress),#edf1e7 0); position:relative; }
 .energy-ring::before { content:''; position:absolute; inset:9px; background:white; border-radius:50%; }
-.energy-ring > div { z-index:1; display:grid; gap:4px; }
+.energy-ring > div { z-index:1; display:grid; gap:4px; text-align:center; justify-items:center; }
 .energy-ring strong { font:800 31px var(--heading); letter-spacing:-.05em; }
 .energy-ring > div > span { font-size:12px; color:#849078; }
 .daily-balance > p { font-size:12px; color:var(--text-muted); margin-top:15px; }

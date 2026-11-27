@@ -10,3 +10,5 @@ android
 *.jks
 *.keystore
 work/
+AUDIT.md
+output/security-audit/

@@ -18,7 +18,7 @@ export default function LogoWelcome({ onComplete, signedIn = false }) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     element.focus({ preventScroll: true });
-    const hold = signedIn ? 800 : 1000;
+    const hold = 2250;
     const easing = 'cubic-bezier(.22,1,.36,1)';
     const animations = [
       element.querySelector('.logo-welcome-brand').animate([

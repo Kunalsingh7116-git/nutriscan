@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { randomBytes, createHash } = require('node:crypto');
-const jwt = require('jsonwebtoken');
+const { event, limit, sessionFor } = require('../security');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const GoogleSignIn = require('../models/GoogleSignIn');
@@ -29,7 +29,11 @@ router.use((req, res, next) => {
 
 router.get('/config', (req, res) => res.json({ origin: config()?.origin || null }));
 
-router.post('/native/start', async (req, res) => {
+const startLimit = limit('google.start', { ip: 60, seconds: 900 });
+const finishLimit = limit('google.finish', { ip: 120, seconds: 900 });
+const claimLimit = limit('google.claim', { ip: 180, seconds: 300 });
+
+router.post('/native/start', startLimit, async (req, res) => {
   const settings = config();
   if (!settings || req.get('origin') !== settings.origin || !settings.origin.startsWith('https:')) {
     return res.status(503).json({ message: 'Google sign-in requires the live NutriScan server.' });
@@ -46,7 +50,7 @@ router.post('/native/start', async (req, res) => {
   }
 });
 
-router.post('/native/finish', async (req, res) => {
+router.post('/native/finish', finishLimit, async (req, res) => {
   const settings = config();
   const { nonce, idToken } = req.body || {};
   if (!settings || req.get('origin') !== settings.origin || !settings.origin.startsWith('https:')
@@ -59,6 +63,7 @@ router.post('/native/finish', async (req, res) => {
     identity = ticket.getPayload();
     if (identity?.nonce !== nonce) throw new Error('Nonce mismatch');
   } catch {
+    event('google.login_rejected');
     return res.status(401).json({ message: 'Couldn’t verify your Google account. Try again.' });
   }
   try {
@@ -74,7 +79,7 @@ router.post('/native/finish', async (req, res) => {
   }
 });
 
-router.post('/start', async (req, res) => {
+router.post('/start', startLimit, async (req, res) => {
   const settings = config();
   if (!settings || req.get('origin') !== settings.origin) {
     return res.status(503).json({ message: 'Google sign-in isn’t available on this server address.' });
@@ -122,7 +127,7 @@ async function googleIdentity(code, verifier, settings) {
 async function findGoogleUser(identity) {
   if (identity.email_verified !== true || typeof identity.sub !== 'string' || !identity.sub
     || typeof identity.email !== 'string' || !identity.email.trim()) return null;
-  const existing = await User.findOne({ google_sub: identity.sub });
+  const existing = await User.findOne({ google_sub: identity.sub, deletingAt: null }).select('+sessionVersion');
   if (existing) return existing;
   const email = identity.email.trim().toLowerCase();
   if (await User.exists({ email })) return null;
@@ -132,12 +137,12 @@ async function findGoogleUser(identity) {
       name: { first: identity.given_name?.trim() || identity.name?.trim() || 'Google', last: identity.family_name?.trim() || 'User' },
     });
   } catch (error) {
-    if (error.code === 11000) return User.findOne({ google_sub: identity.sub });
+    if (error.code === 11000) return User.findOne({ google_sub: identity.sub, deletingAt: null }).select('+sessionVersion');
     throw error;
   }
 }
 
-router.get('/callback', async (req, res) => {
+router.get('/callback', finishLimit, async (req, res) => {
   const settings = config();
   if (!settings || !validToken(req.query.state)) return res.status(400).send('Invalid Google sign-in request.');
   try {
@@ -169,7 +174,7 @@ router.get('/callback', async (req, res) => {
   }
 });
 
-router.post('/claim', async (req, res) => {
+router.post('/claim', claimLimit, async (req, res) => {
   const { claim } = req.body || {};
   if (!validToken(claim)) return res.status(400).json({ message: 'Invalid Google sign-in request.' });
   const query = { claimHash: hash(claim), expiresAt: { $gt: new Date() } };
@@ -180,7 +185,7 @@ router.post('/claim', async (req, res) => {
       return res.status(410).json({ message: 'This Google sign-in has expired. Start again.' });
     }
     if (flow.status === 'failed') return res.status(400).json({ message: flow.error });
-    const account = await User.findOne({ user_id: flow.userId });
+    const account = await User.findOne({ user_id: flow.userId, deletingAt: null }).select('+sessionVersion');
     if (!account) return res.status(410).json({ message: 'This Google sign-in has expired. Start again.' });
     sendSession(res, account);
   } catch (error) {
@@ -191,8 +196,8 @@ router.post('/claim', async (req, res) => {
 
 function sendSession(res, account) {
   const { user_id, name, email, age } = account;
-  const token = jwt.sign({ userId: user_id, email }, process.env.JWT_SECRET, { expiresIn: '7d' });
-  return res.json({ token, user: { user_id, name, email, age } });
+  const token = sessionFor(account);
+  return res.json({ token, user: { user_id, name, email, age, requires_password: false } });
 }
 
 module.exports = router;

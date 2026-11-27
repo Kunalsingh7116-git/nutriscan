@@ -1,8 +1,9 @@
 const app = require('../server/app');
 const connectDatabase = require('../server/database');
+const { signingKeyReady } = require('../server/security');
 
 module.exports = async function handler(req, res) {
-  if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
+  if (!process.env.MONGODB_URI || !signingKeyReady()) {
     return res.status(503).json({ message: 'NutriScan’s server setup is incomplete.' });
   }
 

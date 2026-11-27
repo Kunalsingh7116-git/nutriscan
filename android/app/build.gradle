@@ -2,8 +2,8 @@ plugins {
     id 'com.android.application'
 }
 
-def defaultServer = providers.gradleProperty('nutriscanServer')
-    .orElse('https://nutriscan-six-theta.vercel.app').get()
+def productionServer = 'https://nutriscan-six-theta.vercel.app'
+def debugServer = providers.gradleProperty('nutriscanServer').orElse(productionServer).get()
 
 android {
     namespace 'com.nutriscan.mobile'
@@ -13,10 +13,25 @@ android {
         applicationId 'com.nutriscan.mobile'
         minSdk 24
         targetSdk 34
-        versionCode 2
-        versionName '1.1'
-        buildConfigField 'String', 'DEFAULT_SERVER', groovy.json.JsonOutput.toJson(defaultServer)
+        versionCode 4
+        versionName '1.3'
+        buildConfigField 'String', 'DEFAULT_SERVER', groovy.json.JsonOutput.toJson(productionServer)
     }
+
+    buildTypes {
+        debug {
+            manifestPlaceholders = [allowCleartextTraffic: 'true']
+            buildConfigField 'String', 'DEFAULT_SERVER', groovy.json.JsonOutput.toJson(debugServer)
+        }
+        release {
+            debuggable false
+            manifestPlaceholders = [allowCleartextTraffic: 'false']
+        }
+    }
+}
+
+dependencyLocking {
+    lockAllConfigurations()
 }
 
 dependencies {

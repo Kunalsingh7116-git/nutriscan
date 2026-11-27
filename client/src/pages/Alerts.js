@@ -5,6 +5,7 @@ import useReducedMotion from '../hooks/useReducedMotion';
 import NumberTicker from '../components/ui/NumberTicker';
 import { Activity, Bell, BellRing, CalendarDays, Check, CheckCheck, CircleAlert, Droplets, Flame, Leaf, ShieldCheck, Wheat } from 'lucide-react';
 import api from '../utils/api';
+import { getAll } from '../utils/paginatedApi';
 import './Alerts.css';
 
 const alertStyles = {
@@ -60,7 +61,7 @@ export default function Alerts() {
     const controller = new AbortController();
     setLoading(true);
     setLoadError(false);
-    api.get('/alerts', { signal: controller.signal })
+    getAll('/alerts', { signal: controller.signal })
       .then(({ data }) => setAlerts(data))
       .catch(() => { if (!controller.signal.aborted) setLoadError(true); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });

@@ -3,6 +3,7 @@ import '@testing-library/jest-dom';
 import axios from 'axios';
 import { AuthProvider, useAuth } from './AuthContext';
 
+jest.mock('../utils/routeLoaders', () => ({ preloadRoute: jest.fn() }));
 jest.mock('axios', () => ({ defaults: { headers: { common: {} } }, get: jest.fn() }));
 
 function Session() {

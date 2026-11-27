@@ -36,7 +36,31 @@ function toForm(profile) {
 
 export default function Profile() {
   const { preference, changePreference } = useMotionPreference();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState('');
+  const [password, setPassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const cancelDelete = () => {
+    setDeleteOpen(false);
+    setConfirmation('');
+    setPassword('');
+    setDeleteError('');
+  };
+  async function deleteAccount(event) {
+    event.preventDefault();
+    if (deleting || confirmation !== 'DELETE') return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await api.delete('/users/me', { data: { confirmation, password } });
+      await logout({ revoke: false });
+    } catch (failure) {
+      setDeleteError(failure.response?.data?.message || 'Couldn’t delete your account. Try again.');
+      setDeleting(false);
+    }
+  }
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState(() => toForm());
   const [loading, setLoading] = useState(true);
@@ -202,6 +226,32 @@ export default function Profile() {
             <option value="reduced">Reduced motion</option>
           </select>
         </label>
+      </section>
+
+      <section className="card profile-card" aria-labelledby="delete-account-title">
+        <h2 id="delete-account-title">Delete account</h2>
+        {!deleteOpen ? <button className="btn btn-outline" type="button" onClick={() => setDeleteOpen(true)}>
+          Delete my NutriScan account
+        </button> : <form onSubmit={deleteAccount}>
+          <p>This permanently deletes your account, health profile, photos and personal meal history.</p>
+          <fieldset disabled={deleting}>
+            <label className="form-label" htmlFor="confirm-delete">Type DELETE to confirm</label>
+            <input id="confirm-delete" className="form-input" value={confirmation} required
+              onChange={event => setConfirmation(event.target.value)} />
+            {user?.requires_password && <>
+              <label className="form-label" htmlFor="delete-password">Current password</label>
+              <input id="delete-password" className="form-input" type="password" autoComplete="current-password"
+                value={password} required onChange={event => setPassword(event.target.value)} />
+            </>}
+          </fieldset>
+          {deleteError && <p className="alert-box alert-error" role="alert">{deleteError}</p>}
+          <div className="profile-form-actions">
+            <button className="btn btn-outline" type="button" disabled={deleting} onClick={cancelDelete}>Cancel</button>
+            <button className="btn btn-primary" type="submit" disabled={deleting || confirmation !== 'DELETE'}>
+              {deleting ? 'Deleting…' : 'Permanently delete account'}
+            </button>
+          </div>
+        </form>}
       </section>
 
       <details className="card profile-references">

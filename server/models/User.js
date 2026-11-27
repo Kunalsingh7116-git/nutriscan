@@ -10,16 +10,18 @@ const UserSchema = new mongoose.Schema({
   },
   email: { type: String, required: true, unique: true, lowercase: true },
   google_sub: { type: String, unique: true, sparse: true, select: false },
-  password: { type: String, required() { return !this.google_sub; } },
+  password: { type: String, select: false, required() { return !this.google_sub; } },
   phone_number: [String],
+  deletingAt: { type: Date, select: false },
+  sessionVersion: { type: Number, default: 0, select: false },
+  writeVersion: { type: Number, default: 0, select: false },
   date_of_birth: { type: Date, required() { return !this.google_sub; } },
 }, { timestamps: true });
 
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function () {
   if (this.isModified('password') && this.password) {
     this.password = await bcrypt.hash(this.password, 10);
   }
-  next();
 });
 
 UserSchema.virtual('age').get(function () {

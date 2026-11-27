@@ -5,7 +5,7 @@
         android:icon="@drawable/ic_nutriscan"
         android:label="NutriScan"
         android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="${allowCleartextTraffic}">
         <activity android:name=".MainActivity" android:exported="true"
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboardHidden"
